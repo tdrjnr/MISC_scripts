@@ -1,0 +1,365 @@
+PYTHON ERRORS
+
+
+p
+
+
+/usr/bin/pip2.7 install ifparser ifconfigpy pynetinfo pynetlinux sh ipget ethtool get-mac humanfriendly netutils-linux shlex tcconfig ifaceinfo backport_ipaddress ipaddr hostsmgr sy uipcalc uipcalc rexutil arpreq netdevice==0.9
+
+-t /mnt/storage/python2.7.modulessy
+###SCENARIO### psutil/_psutil_common.c:9:20: fatal error: Python.h: No such file or directory
+https://stackoverflow.com/questions/11094718/error-command-gcc-failed-with-exit-status-1-while-installing-eventlet
+2520  yum install python-devel
+2521  yum install python3-devel
+2522  yum install libevent-devel
+2523  yum install python36-devel
+
+yum install libffi-devel openssl-devel python-devel
+
+[root@linuxserver python2.7.modules]# /usr/bin/pip2.7 install psutil -t /mnt/storage/python2.7.modules
+Collecting psutil
+  Using cached https://files.pythonhosted.org/packages/51/9e/0f8f5423ce28c9109807024f7bdde776ed0b1161de20b408875de7e030c3/psutil-5.4.6.tar.gz
+Installing collected packages: psutil
+  Running setup.py install for psutil ... done
+Successfully installed psutil-5.4.6
+
+
+###SCENARIO### getting ROUTES
+https://stackoverflow.com/questions/20908287/is-there-a-method-to-get-default-network-interface-on-local-using-python3
+http://nullege.com/codes/search/netinfo.get_ip
+https://stackoverflow.com/questions/4954738/python-linux-route-table-lookup
+https://stackoverflow.com/questions/14557198/how-to-read-a-routing-table-from-a-file-in-python
+https://github.com/nwhalen/python-iproute2
+http://howto.lintel.in/how-to-check-routes-routing-table-in-linux/
+ftp://ftp.wayne.edu/ldp/en/linux-ip/linux-ip-single.html
+https://phoenixjostle.wordpress.com/2013/08/16/route-in-linux-and-scappy/
+https://www.halolinux.us/kernel-reference/routing-data-structures.html
+https://stackoverflow.com/questions/5281341/get-local-network-interface-addresses-using-only-proc
+https://gist.github.com/pklaus/289646
+http://www.learntosolveit.com/python/networking_allifaces.html
+
+https://pydigger.com/pypi/pyroute2
+https://pyroute2.org/pyroute2-0.3.14p4/iproute.html
+https://docs.pyroute2.org/ipdb.html
+
+https://baturin.org/docs/iproute2/
+
+--------------------
+    return_value = []
+    output = subprocess.Popen(
+        ['netstat','--interfaces','all'],
+        stdout=subprocess.PIPE).communicate()[0]
+    #Kernel Interface table
+    #Iface   MTU Met   RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg
+    #eth0       1500 0   1229230      0      0 0       1279754      0      0 0 BMRU
+    #lo        16436 0       163      0      0 0           163      0      0 0 LRU
+    lines = output.strip().splitlines()
+    lines.pop(0)
+    lines.pop(0)
+    for line in lines:
+        line = line.strip().split()
+        return_value.append(line[0])
+    return return_value
+----------------------
+I found an easier way: os.listdir('/sys/class/net').
+
+-----------------------
+
+
+If your file has the following format :
+
+(line 1) : subnet,mask,nextop
+(line 2) : subnet,mask,nextop
+...
+(line n) : subnet,mask,nextop
+
+f = open(path_to_file)
+lines = f.readlines()
+data = []
+for line in lines:
+    o = {"subnet" : line.split(',')[0], "mask" : line.split(',')[1], "nexthop" : line.split(',')[2]}
+    data.append(o)
+
+
+-----------------------
+ script to check gateway reachability 
+http://www.atechnote.com/2016/12/script-to-check-gateway-reachability.html
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+
+-----------------------
+https://pydigger.com/pypi/pyroute2
+https://pyroute2.org/pyroute2-0.3.14p4/iproute.html
+https://docs.pyroute2.org/ipdb.html
+
+Line 1121	4h	In [2]: from iproute2 import routingtable
+Line 1129	4h	In [3]: import os,sys,subprocess
+Line 1131	4h	In [4]: sys.path.append("/mnt/storage/python2.7.modules/")
+Line 1133	4h	In [5]: from iproute2 import routingtable
+Line 1141	4h	In [6]: from pyroute2 import IPRoute
+Line 1143	4h	In [7]: ip = IPRoute()
+Line 1145	4h	In [8]: ip.
+Line 1162	4h	In [8]: ip.
+Line 1165	4h	In [8]: ip.get_addr()
+Line 1251	4h	In [9]: ip.get_addr()[0]
+Line 1271	4h	In [10]: len(ip.get_addr())
+Line 1274	4h	In [11]: ip.get_addr()[1]
+Line 1295	4h	In [12]: ip.get_addr()[1]['attrs']
+Line 1304	4h	In [13]: ip.get_addr()[1]['attrs'][0]
+Line 1307	4h	In [14]: ip.get_addr(index=2)
+Line 1310	4h	In [15]: ip.get_addr(index=1)
+Line 1345	4h	In [16]: len(ip.get_addr(index=1))
+Line 1348	4h	In [17]: len(ip.get_addr(index=0))
+Line 1351	4h	In [18]: len(ip.get_addr(index=1))
+Line 1354	4h	In [19]: ip.get_addr(index=0)
+Line 1357	4h	In [20]: ip.get_addr(index=1)
+Line 1392	4h	In [21]: ip.get_addr(index=2)
+Line 1395	4h	In [22]: ip.get_addr(index=3)
+Line 1398	4h	In [23]: ip.get_addr(label='eth0')
+Line 1401	4h	In [24]: ip.get_addr(label='eth0')
+Line 1404	4h	In [25]: !ip add s
+Line 1428	4h	In [26]: ip.get_addr(label='wlp3s0')
+Line 1449	4h	In [27]: ip.get_links()
+Line 1659	4h	In [28]: ip.get_links()ip.get_links(1, 2, 3)
+Line 1666	4h	In [29]: ip.get_links(1, 2, 3)
+Line 1771	4h	In [30]: ip.get_links(1)
+Line 1808	4h	In [31]: ip.get_neighbours(dst='192.168.0.0')
+Line 1811	4h	In [32]: !ip add nei
+Line 1814	4h	In [33]: !ip get nei
+Line 1817	4h	In [34]: !ip nei
+Line 1820	4h	In [35]: ip.get_neighbours(dst='192.168.0.1')
+Line 1840	4h	In [36]: ip.get_routes() 
+Line 2104	4h	In [37]: len(ip.get_routes())
+Line 2107	4h	In [38]: ip.get_routes()[0]
+Line 2130	4h	In [39]: ip.get_routes()[1]
+Line 2154	4h	In [40]: ip.get_routes(family=AF_INET)
+Line 2162	4h	In [41]: ip.get_routes
+Line 2165	4h	In [41]: ip.get_routes?
+Line 2186	4h	In [42]: ip.get_routes
+Line 2189	4h	In [43]: ip.get_routes()
+Line 2453	4h	In [44]: ip.get_routes()[0]
+Line 2476	4h	In [45]: ip.get_routes()[1]
+Line 2500	4h	In [46]: !ip add s
+Line 2524	4h	In [47]: !ip rout
+Line 2529	4h	In [48]: len(ip.get_routes())
+Line 2532	4h	In [49]: !ip rout ca
+Line 2535	4h	In [50]: ip.get_routes(family=AF_INET)
+Line 2538	4h	In [50]: ip.get_routes(table=254)
+Line 2602	4h	In [51]: ip.get_routes(family=AF_INET)
+Line 2610	4h	In [52]: ip.get_routes(family=AF_INET.)
+Line 2617	4h	In [53]: ip.get_rules() 
+Line 2671	4h	In [54]: ip.link_lookup(ifname="lo")
+Line 2674	4h	In [55]: ip.link_lookup(ifname="")
+Line 2677	4h	In [55]: !ip add s
+Line 2701	4h	In [56]: ip.link_lookup(ifname="wlp3s0")
+Line 2704	4h	In [57]: ip.link_lookup(operstate="UP")
+Line 2707	4h	In [58]: with IPDB() as ipdb
+Line 2714	4h	In [59]: with IPDB() as ipdb:
+Line 2718	4h	In [59]: from pyroute2 import IPDB
+Line 2720	4h	In [60]: ipdb = IPDB()
+Line 2722	4h	In [61]: ipdb.interfaces
+Line 2737	4h	In [62]: len(ipdb.interfaces)
+Line 2740	4h	In [63]: ipdb.interfaces.
+Line 2748	4h	In [63]: ipdb.interfaces.w
+Line 2751	4h	In [63]: ipdb.interfaces.wlp3s0
+Line 2754	4h	In [64]: ipdb.interfaces.wlp3s0.
+Line 2913	4h	In [64]: ipdb.interfaces.wlp3s0.add
+Line 2916	4h	In [64]: ipdb.interfaces.wlp3s0.address
+Line 2919	4h	In [65]: ipdb.interfaces.wlp3s0.i
+Line 2933	4h	In [65]: ipdb.interfaces.wlp3s0.ip
+Line 2943	4h	In [65]: ipdb.interfaces.wlp3s0.
+Line 3102	4h	In [65]: ipdb.interfaces.wlp3s0.get
+Line 3105	4h	In [65]: ipdb.interfaces.wlp3s0.get
+Line 3108	4h	In [66]: ipdb.interfaces.wlp3s0.li
+Line 3111	4h	In [66]: ipdb.interfaces.wlp3s0.link
+Line 3113	4h	In [67]: ipdb.interfaces.wlp3s0.linkmode
+Line 3116	4h	In [68]: ipdb.interfaces.wlp3s0.ad
+Line 3119	4h	In [68]: ipdb.interfaces.wlp3s0.address
+Line 3122	4h	In [69]: ipdb.interfaces.wlp3s0
+Line 3125	4h	In [70]: ipdb.interfaces.wlp3s0.
+Line 3284	4h	In [70]: ipdb.interfaces.wlp3s0.ipaddr
+Line 3287	4h	In [71]: ipdb.interfaces.wlp3s0.ipaddr[0]
+Line 3300	4h	In [72]: ipdb.interfaces.wlp3s0.ipaddr[0]['address']
+Line 3303	4h	In [73]: ipdb.interfaces.wlp3s0
+Line 3306	4h	In [73]: ipdb.interfaces.wlp3s0.r
+Line 3311	4h	In [73]: ipdb.interfaces.
+Line 3319	4h	In [73]: ipdb.interfaces.v
+Line 3323	4h	In [73]: ipdb.interfaces.values
+Line 3326	4h	In [74]: ipdb.interfaces.values()
+Line 3341	4h	In [75]: ipdb.r
+Line 3344	4h	In [75]: ipdb.r
+Line 3347	4h	In [75]: ipdb.routes.
+Line 3353	4h	In [75]: ipdb.routes
+Line 3356	4h	In [76]: ipdb.routes[0]
+Line 3359	4h	In [77]: ipdb.routes[4]
+Line 3362	4h	In [78]: ipdb.routes
+Line 3365	4h	In [78]: ipdb.routes.
+Line 3371	4h	In [78]: ipdb.routes.tables
+Line 3377	4h	In [79]: len(ipdb.routes.tables)
+Line 3380	4h	In [80]: ipdb.routes.tables[0]
+Line 3383	4h	In [81]: ipdb.routes.tables[1]
+Line 3391	4h	In [82]: ipdb.routes.tables[1`]
+Line 3394	4h	In [82]: len(ipdb.routes.tables)
+Line 3397	4h	In [83]: ipdb.routes.tables[2]
+Line 3405	4h	In [84]: ipdb.routes.tables[0]
+Line 3408	4h	In [85]: len(ipdb.routes.tables[0])
+Line 3411	4h	In [86]: len(ipdb.routes.tables[1])
+Line 3419	4h	In [87]: for addr in ipdb.interfaces['eth0'].ipaddr:
+Line 3423	4h	In [87]: for addr in ipdb.interfaces['eth0'].ipaddr:
+Line 3426	4h	In [87]: !ip add s
+Line 3450	4h	In [88]: for addr in ipdb.interfaces['wlp3s0'].ipaddr:
+Line 3462	4h	In [89]: ipdb.interfaces.wlp3s0.ipaddr
+Line 3465	4h	In [90]: for addr in ipdb.interfaces['wlp3s0'].ipaddr:
+Line 3471	4h	In [91]: ipdb.interfaces['wlp3s0'].ipaddr.ipv4
+Line 3474	4h	In [92]: print(ipdb.routes['default'])
+Line 3477	4h	In [93]: ipdb.routes.tables.keys()
+Line 3480	4h	In [94]: ipdb.routes.tables.values()
+Line 3486	4h	In [95]: ipdb.routes.tables.keys()
+Line 3489	4h	In [96]: ipdb.routes.tables.keys()
+Line 3492	4h	In [96]: ipdb.routes.tables[254].idx.keys()
+Line 3509	4h	In [97]: ipdb.routes.tables[255].idx.keys()
+Line 3525	4h	In [98]: ipdb.routes.tables[0].idx.keys()
+Line 3528	4h	In [99]: ipdb.routes['default']
+Line 3531	4h	In [100]: ipdb.routes.filter({'oif': idx})
+Line 3539	4h	In [101]: ipdb.routes.filter({'oif': wlp3s0})
+Line 3547	4h	In [102]: ipdb.routes.filter({'oif':wlp3s0})
+Line 3555	4h	In [103]: 
+
+-----------------------
+
+
+###SCENARIO### datestamp for use with naming files
+from time import strftime as _strftime
+
+def iso8601():
+    """Returns an ISO 8601-compatible datestamp for use with naming files."""
+    return _strftime('%Y%m%dT%H%M%S')
+
+###SCENARIO### Getting realtime output using Python Subprocess
+https://www.endpoint.com/blog/2015/01/28/getting-realtime-output-using-python
+###SCENARIO### pyroute2
+make install or pip install pyroute2
+[root@linuxserver python2.7.modules]# /usr/bin/pip2.7 install flake8 coverage nosetests -t /mnt/storage/python2.7.modules
+
+###SCENARIO### Netstat detect number of connection on port
+http://forums.devshed.com/python-programming-11/netstat-detect-connection-port-936025.html
+https://www.tecmint.com/20-netstat-commands-for-linux-network-management/
+
+###SCENARIO### Collecting data via a python script, later putting it into Splunk
+
+https://answers.splunk.com/answers/242959/collecting-data-via-a-python-script-later-putting.html
+
+###SCENARIO### iotop - ValueError: need more than 1 value to unpack
+https://unix.stackexchange.com/questions/446624/error-with-command-iotop-on-centos
+[root@linuxserver python2.7.modules]# iotop
+^CTraceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/iotop/data.py", line 292, in get_cmdline
+    proc_status = parse_proc_pid_status(self.pid)
+  File "/usr/lib/python2.7/site-packages/iotop/data.py", line 196, in parse_proc_pid_status
+    key, value = line.split(':\t', 1)
+ValueError: need more than 1 value to unpack
+
+###SCENARIO### A curated list of awesome Python frameworks, libraries and software
+
+https://github.com/bdastur/awesome-python#files
+###SCENARIO### ERROR: Getting text from the clipboard on this platform requires Tkinter
+[root@linuxserver ~]# yum search tkinter
+Loaded plugins: langpacks, product-id, search-disabled-repos, subscription-manager
+======================================================== N/S matched: tkinter =========================================================
+python27-tkinter.x86_64 : A graphical user interface for the Python scripting language
+python33-python-tkinter.x86_64 : A GUI toolkit for Python 3
+python34-tkinter.x86_64 : A GUI toolkit for Python 3
+python36-tkinter.x86_64 : A GUI toolkit for Python
+rh-python34-python-tkinter.x86_64 : A GUI toolkit for Python 3
+rh-python35-python-tkinter.x86_64 : A GUI toolkit for Python 3
+rh-python36-python-tkinter.x86_64 : A GUI toolkit for Python 3
+tkinter.x86_64 : A graphical user interface for the Python scripting language
+
+[root@linuxserver ~]# yum install tkinter
+[root@linuxserver ~]# yum install python27-tkinter python36-tkinter
+
+###SCENARIO### 
+http://blog.raymond.burkholder.net/index.php?/archives/680-ping.py-Network-ping-with-loss-latency-jitter-and-MOS.html
+https://www.falatic.com/index.php/39/pinging-with-python
+
+###SCENARIO### Python Code Search Engine
+https://pythonexample.com/search?q=netstat
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### Tools
+pyroute
+pynetstat
+histstat
+netifaces
+ifparser
+ifconfigpy
+pynetinfo
+pynetlinux
+sh
+ipget
+ethtool
+httpcap
+get-mac
+humanfriendly
+netutils-linux
+shlex
+tcconfig
+pykdump
+ifaceinfo
+ipaddress
+backport_ipaddress
+ipaddr
+hostsmgr
+sy
+uipcalc
+rexutil
+arpreq
+netdevice==0.9
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

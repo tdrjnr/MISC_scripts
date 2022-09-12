@@ -1,0 +1,4 @@
+#!/bin/bash -x
+#/var/log/collectl/*`/bin/date +%Y%m%d`*.gz
+collectl -scndm -oD -p /var/log/collectl/linuxserver-20180527-191035.raw.gz --from 19:10-19:13
+#collectl --verbose -scndm -oD -p /var/log/collectl/linuxserver-20180527-191035.raw.gz --from 19:30-19:32

@@ -1,0 +1,17 @@
+#!/bin/bash -x
+
+#collectl -oD --top syst usrt --verbose -c3
+#collectl -oD --top syst usrt -c3
+
+#collectl -oD -p linuxserver-20180527-191035.raw.gz --grep SUnreclaim | less
+
+#collectl -sZ -i:1 --procfilt cfirefox -oT
+#collectl -sZ -p linuxserver-20180527-191035.raw.gz --grep firefox | less
+
+#collectl -oD -p linuxserver-20180527-191035.raw.gz --grep "SReclaimable|SUnreclaim" | less
+##collectl -oD -p linuxserver-20180527-191035.raw.gz --grep SUnreclaim --from 19:30-19:35
+
+#collectl --top --showtopopts
+#collectl --top iokb
+collectl --top iokb --procfilt cfirefox -c3
+#collectl -i:2 -sZ --procfilt firefox

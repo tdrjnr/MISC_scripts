@@ -1,0 +1,307 @@
+import os,sys
+import glob,glob2
+path = ('X:\\clypcal\\JPM\\scripts\\WORKING\\scripts\\shell\\network')
+os.chdir(path)
+os.getcwd()
+
+In [474]: glob2.glob("*.out")
+Out[474]:
+['ifconfig.out',
+ 'ip-route.out',
+ 'ipaddrshow.out',
+ 'iplinkshow.out',
+ 'iptables.out',
+ 'netstat.out',
+ 'ss-s.out']
+
+In [475]: glob2.glob("net*")
+Out[475]: ['netstat.out']
+
+In [476]: glob.glob("net*")
+Out[476]: ['netstat.out']
+
+------------------
+In [434]: for filename in files:
+   .....:     with open(filename, 'rb') as f:
+   .....:         for line in f:
+   .....:             print line
+   .....:
+Kernel IP routing table
+
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+
+0.0.0.0         192.168.0.1     0.0.0.0         UG        0 0          0 wlp3s0
+
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 wlp3s0
+
+---------------
+
+In [228]: tlist
+Out[228]:
+[['Kernel IP routing table'],
+ ['Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface'],
+ ['0.0.0.0         192.168.0.1     0.0.0.0         UG        0 0          0 wlp3s0'],
+ ['192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 wlp3s0'],
+ ['192.168.122.0   0.0.0.0         255.255.255.0   U         0 0          0 virbr0']]
+
+----------------
+tlist1=(tlist[2:])
+Out[208]:
+[['0.0.0.0         192.168.0.1     0.0.0.0         UG        0 0          0 wlp3s0'],
+ ['192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 wlp3s0'],
+
+In [209]: tlist1[0][0].split()
+Out[209]: ['0.0.0.0', '192.168.0.1', '0.0.0.0', 'UG', '0', '0', '0', 'wlp3s0']
+
+In [220]: tlist1[0][0].split()[7]
+Out[220]: 'wlp3s0
+
+In [239]: tuple(tlist1[0][0].split()[:])
+Out[239]: ('0.0.0.0', '192.168.0.1', '0.0.0.0', 'UG', '0', '0', '0', 'wlp3s0')
+
+In [240]: tuple(tlist1[0][0].split()[0:6])
+Out[240]: ('0.0.0.0', '192.168.0.1', '0.0.0.0', 'UG', '0', '0')
+------------------------
+In [345]: tuple(tlist[:])
+Out[345]:
+(['Kernel IP routing table'],
+ ['Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface'],
+ ['0.0.0.0         192.168.0.1     0.0.0.0         UG        0 0          0 wlp3s0'],
+ ['192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 wlp3s0'],
+ ['192.168.122.0   0.0.0.0         255.255.255.0   U         0 0          0 virbr0'])
+
+------------
+In [397]: for i in net_routes:
+   .....:     print i[0].split()
+   .....:
+['0.0.0.0', '192.168.0.1', '0.0.0.0', 'UG', '0', '0', '0', 'wlp3s0']
+['192.168.0.0', '0.0.0.0', '255.255.255.0', 'U', '0', '0', '0', 'wlp3s0']
+['192.168.122.0', '0.0.0.0', '255.255.255.0', 'U', '0', '0', '0', 'virbr0']
+
+
+In [399]: 
+   .....:     i=i[0].split()
+   .....:     int=i[7]
+   .....:     print int
+   .....:
+wlp3s0
+wlp3s0
+virbr0
+
+
+#####################################################################
+#
+#####################################################################
+
+
+
+
+
+#print (len(netroutes))
+#net_routes = tlist[2:]
+
+#net_routes = tlist1=(tlist[2:])
+
+#tuple(tlist[:])
+#net_routes = tuple(tlist[2:])
+
+#netroutes[0].split()
+netroutes1 = []
+introutes = {}
+
+
+for x in netroutes:
+	x = x.split()
+	#print i
+	#x = x[7]
+	#print x
+	destination = x[0]
+	gateway = x[1]
+	iface = x[7]
+	introutes[iface] = gateway,destination
+	#netroutes1.append(x)
+	#print x[7]
+
+
+#####################################################################
+#
+#####################################################################
+
+Multiple identical keys in a Python dict - yes, you can!
+http://www.wellho.net/mouth/3934_Multiple-identical-keys-in-a-Python-dict-yes-you-can-.html
+
+multiple values at same key
+http://www.wellho.net/resources/ex.php4?item=y107/timberpull
+
+Averaging lists of values with duplicate keys
+https://codereview.stackexchange.com/questions/82010/averaging-lists-of-values-with-duplicate-keys
+
+parse netstat command lines output into python named-tuples!
+http://www.iesensor.com/blog/2012/12/11/pynetstat/
+
+Convert any dictionary to a named tuple 
+https://gist.github.com/href/1319371
+
+################# namedtuple
+https://stackoverflow.com/questions/2970608/what-are-named-tuples-in-python
+
+from collections import namedtuple
+###Vision = namedtuple('Vision', ['left', 'right'])
+##Vision = namedtuple('Vision', ['interface', 'gateway', 'destination'])
+#vision = Vision(introutes.keys, introutes.values()[0][0],introutes.values()[0][1])
+
+
+------------------- CONVERT A DICTIONARY TO A NAMEDTUPLE
+In [82]: %paste
+def convert(dictionary):
+    return namedtuple('GenericDict', dictionary.keys())(**dictionary)
+
+## -- End pasted text --
+
+In [83]: introutes
+Out[83]: {'virbr0': ('0.0.0.0', '192.168.122.0'), 'wlp3s0': ('0.0.0.0', '192.168.0.0')}
+
+In [84]: convert(introutes)
+Out[84]: GenericDict(wlp3s0=('0.0.0.0', '192.168.0.0'), virbr0=('0.0.0.0', '192.168.122.0'))
+
+In [85]: sd=convert(introutes)
+
+In [86]: sd
+Out[86]: GenericDict(wlp3s0=('0.0.0.0', '192.168.0.0'), virbr0=('0.0.0.0', '192.168.122.0'))
+
+In [87]: sd.
+sd.count  sd.index  sd.virbr0 sd.wlp3s0
+
+In [87]: sd.virbr0
+Out[87]: ('0.0.0.0', '192.168.122.0')
+
+-----------------
+In [92]: introutes
+Out[92]: {'virbr0': ('0.0.0.0', '192.168.122.0'), 'wlp3s0': ('0.0.0.0', '192.168.0.0')}
+
+In [91]: Row2(*introutes)
+Out[91]: interface(gateway='wlp3s0', destination='virbr0')
+
+
+
+--------------
+In [113]: Row = namedtuple("Row",["Destination","Gateway","Genmask","Flags","MSS","Window","irtt","Iface"])
+
+
+In [124]: Row.
+Row.Destination Row.Gateway     Row.Iface       Row.Window      Row.index
+Row.Flags       Row.Genmask     Row.MSS         Row.count       Row.irtt
+
+In [149]: Row._fields
+Out[149]:
+('Destination',
+ 'Gateway',
+ 'Genmask',
+ 'Flags',
+ 'MSS',
+ 'Window',
+ 'irtt',
+ 'Iface')
+
+
+
+In [116]: int_routes_namedtuple = Row(*netroutes1[0])
+
+In [133]: int_routes_namedtuple
+Out[133]: Row(Destination='0.0.0.0', Gateway='192.168.0.1', Genmask='0.0.0.0', Flags='UG', MSS='0', Window='0', irtt='0', Iface='wlp3s0')
+
+In [134]: int_routes_namedtuple.
+int_routes_namedtuple.Destination int_routes_namedtuple.Iface       int_routes_namedtuple.index
+int_routes_namedtuple.Flags       int_routes_namedtuple.MSS         int_routes_namedtuple.irtt
+int_routes_namedtuple.Gateway     int_routes_namedtuple.Window
+int_routes_namedtuple.Genmask     int_routes_namedtuple.count
+
+In [134]: int_routes_namedtuple.Iface
+Out[134]: 'wlp3s0'
+
+In [135]: int_routes_namedtuple.Destination
+Out[135]: '0.0.0.0'
+
+In [136]: int_routes_namedtuple.Gateway
+Out[136]: '192.168.0.1'
+
+----------------- APPEND TO EMPTY NAMEDTUPLE
+In [168]: %paste
+list_int_routes_namedtuple = []
+
+for x in netroutes1:
+        #print x
+        #print Row(*x)
+        list_int_routes_namedtuple.append(Row(*x))
+
+## -- End pasted text --
+
+In [169]: list_int_routes_namedtuple
+Out[169]:
+[Row(Destination='0.0.0.0', Gateway='192.168.0.1', Genmask='0.0.0.0', Flags='UG', MSS='0', Window='0', irtt='0', Iface='wlp3s0'),
+ Row(Destination='192.168.0.0', Gateway='0.0.0.0', Genmask='255.255.255.0', Flags='U', MSS='0', Window='0', irtt='0', Iface='wlp3s0'),
+ Row(Destination='192.168.122.0', Gateway='0.0.0.0', Genmask='255.255.255.0', Flags='U', MSS='0', Window='0', irtt='0', Iface='virbr0'),
+ Row(Destination='0.0.0.0', Gateway='192.168.0.1', Genmask='0.0.0.0', Flags='UG', MSS='0', Window='0', irtt='0', Iface='wlp3s0'),
+ Row(Destination='192.168.0.0', Gateway='0.0.0.0', Genmask='255.255.255.0', Flags='U', MSS='0', Window='0', irtt='0', Iface='wlp3s0'),
+ Row(Destination='192.168.122.0', Gateway='0.0.0.0', Genmask='255.255.255.0', Flags='U', MSS='0', Window='0', irtt='0', Iface='virbr0'),
+ Row(Destination='0.0.0.0', Gateway='192.168.0.1', Genmask='0.0.0.0', Flags='UG', MSS='0', Window='0', irtt='0', Iface='wlp3s0'),
+ Row(Destination='192.168.0.0', Gateway='0.0.0.0', Genmask='255.255.255.0', Flags='U', MSS='0', Window='0', irtt='0', Iface='wlp3s0'),
+ Row(Destination='192.168.122.0', Gateway='0.0.0.0', Genmask='255.255.255.0', Flags='U', MSS='0', Window='0', irtt='0', Iface='virbr0')]
+
+In [170]: list_int_routes_namedtuple[0]
+Out[170]: Row(Destination='0.0.0.0', Gateway='192.168.0.1', Genmask='0.0.0.0', Flags='UG', MSS='0', Window='0', irtt='0', Iface='wlp3s0')
+
+In [171]: list_int_routes_namedtuple[0].
+list_int_routes_namedtuple[0].Destination list_int_routes_namedtuple[0].MSS
+list_int_routes_namedtuple[0].Flags       list_int_routes_namedtuple[0].Window
+list_int_routes_namedtuple[0].Gateway     list_int_routes_namedtuple[0].count
+list_int_routes_namedtuple[0].Genmask     list_int_routes_namedtuple[0].index
+list_int_routes_namedtuple[0].Iface       list_int_routes_namedtuple[0].irtt
+
+In [171]: list_int_routes_namedtuple[0].Iface
+Out[171]: 'wlp3s0'
+
+In [172]: list_int_routes_namedtuple[0].Destination
+Out[172]: '0.0.0.0'
+
+In [173]: list_int_routes_namedtuple[0].Gateway
+Out[173]: '192.168.0.1'
+
+In [183]: for i in list_int_routes_namedtuple.__iter__():
+   .....:     print i.Iface, i.Gateway, i.Destination
+   .....:
+wlp3s0 192.168.0.1 0.0.0.0
+wlp3s0 0.0.0.0 192.168.0.0
+virbr0 0.0.0.0 192.168.122.0
+wlp3s0 192.168.0.1 0.0.0.0
+wlp3s0 0.0.0.0 192.168.0.0
+virbr0 0.0.0.0 192.168.122.0
+wlp3s0 192.168.0.1 0.0.0.0
+wlp3s0 0.0.0.0 192.168.0.0
+virbr0 0.0.0.0 192.168.122.0
+
+----------------- SAVE OUTPUT OF PRINT FUNCTION TO A VARIABLE
+https://stackoverflow.com/questions/46077610/how-to-store-a-print-output-to-variable	
+In [254]: hostname
+Out[254]: 'vm-se1'
+
+In [255]: hostname.format()
+Out[255]: 'vm-se1'
+
+In [256]: hostname1=hostname.format()
+
+In [257]: hostname1
+Out[257]: 'vm-se1'
+
+In [258]:
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,5 @@
+#!/bin/bash -x
+collectl -sc --verbose -c3
+collectl -sC --verbose -c3
+
+#collectl -oD -scj -sC -p /var/log/collectl/linuxserver-20180527-191035.raw.gz --from 19:30-19:32

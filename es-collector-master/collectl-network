@@ -1,0 +1,3 @@
+#!/bin/bash -x
+collectl -sn --verbose -c3
+collectl -sN --verbose -c3

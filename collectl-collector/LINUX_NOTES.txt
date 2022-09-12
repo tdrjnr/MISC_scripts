@@ -1,0 +1,1132 @@
+
+Side-by-side comparison of PCP tools with legacy tools 
+https://access.redhat.com/articles/2372811
+###SCENARIO### root@localhost asm-i386]# cat /proc/interrupts | grep timer
+; sleep 10 ; cat /proc/interrupts | grep timer
+  0:   24060043          XT-PIC  timer
+  0:   24070093          XT-PIC  timer
+
+In Listing 2.1, we ask the kernel to show us how many times the timer has fired, wait 10 seconds, and
+then ask again. That means that on this machine, the timer fires at a rate of (24,070,093  24,060,043)
+interrupts / (10 seconds) or ~1,000 interrupts/sec. If you have significantly more context switches than
+timer interrupts, the context switches are most likely caused by an I/O request or some other
+long-running system call (such as a sleep). When an application requests an operation that can not
+complete immediately, the kernel starts the operation, saves the requesting process, and tries to switch
+to another process if one is ready. This allows the processor to keep busy if possible.
+
+[root@linuxserver ~]# cat /proc/interrupts | grep timer; sleep 10 ; cat /proc/interrupts | grep timer
+  0:         50          0          0          0   IO-APIC-edge      timer
+LOC:      95945      83016      84090      78651   Local timer interrupts
+  0:         50          0          0          0   IO-APIC-edge      timer
+LOC:      96567      83486      84505      78890   Local timer interrupts
+###SCENARIO### 2.1.4. CPU Utilization
+
+CPU utilization is a straightforward concept. At any given time, the CPU can be doing one of seven
+things. First, it can be idle, which means that the processor is not actually doing any work and is waiting
+for something to do. Second, the CPU can be running user code, which is specified as "user" time.
+Third, the CPU can be executing code in the Linux kernel on behalf of the application code. This is
+"system" time. Fourth, the CPU can be executing user code that has been "nice"ed or set to run at a
+lower priority than normal processes. Fifth, the CPU can be in iowait, which mean the system is
+spending its time waiting for I/O (such as disk or network) to complete. Sixth, the CPU can be in irq
+state, which means it is in high-priority kernel code handling a hardware interrupt. Finally, the CPU can
+be in softirq mode, which means it is executing kernel code that was also triggered by an interrupt,
+but it is running at a lower priority (the bottom-half code). This can happen when a device interrupt
+occurs, but the kernel needs to do some work with it before it is ready to hand it over to user space (for
+example, with a network packet).
+
+###SCENARIO### Most performance tools specify these values as a percentage of the total CPU time. These times can
+range from 0 percent to 100 percent, but all three total 100 percent. A system with a high "system"
+percentage is spending most of its time in the kernel. Tools such as oprofile can help determine where
+this time is being spent. A system that has a high "user" time spends most of its time running applications.
+The next chapter shows how to use performance tools to track down problems in these cases. If a
+system is spending most of its time iowait when it should be doing work, it is most likely waiting for
+I/O from a device. It may be a disk, network card, or something else causing the slowdown.
+###SCENARIO### 2.2.1. vmstat (Virtual Memory Statistics)
+
+vmstat stands for virtual memory statistics, which indicates that it will give you information about the
+virtual memory system performance of your system. Fortunately, it actually does much more than that. 
+vmstat is a great command to get a rough idea of how your system performs as a whole. It tells you
+
+   ·  How many processes are running
+
+   ·  How the CPU is being used
+
+   ·  How many interrupts the CPU receives
+
+   ·  How many context switches the scheduler performs
+
+It is an excellent tool to use to get a rough idea of how the system performs.
+
+###SCENARIO### The number of context switches looks good compared to the number of interrupts. The scheduler is
+switching processes less than the number of timer interrupts that are firing. This is most likely because the
+system is nearly idle, and most of the time when the timer interrupt fires, the scheduler does not have any
+work to do, so it does not switch from the idle process.
+
+
+[root@linuxserver ~]# vmstat 1 | tee /tmp/output
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  1      0 9411508 2467196 3213296    0    0   903     4  190  322  2  1 95  2  0
+ 0  0      0 9407788 2467196 3217552    0    0    20     0  276  342  0  0 100  0  0
+ 0  0      0 9406476 2467196 3217556    0    0     0     0  384  455  0  1 99  0  0
+ 0  0      0 9406696 2467196 3217552    0    0     0     0  236  333  0  0 100  0  0
+ 0  0      0 9406540 2467196 3217552    0    0     0     0  263  361  0  0 99  0  0
+ 0  0      0 9406540 2467196 3217488    0    0     0     0  299  399  0  0 100  0  0
+
+[root@linuxserver ~]# more /tmp/output
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  1      0 9411508 2467196 3213296    0    0   903     4  190  322  2  1 95  2  0
+ 0  0      0 9407788 2467196 3217552    0    0    20     0  276  342  0  0 100  0  0
+ 0  0      0 9406476 2467196 3217556    0    0     0     0  384  455  0  1 99  0  0
+ 0  0      0 9406696 2467196 3217552    0    0     0     0  236  333  0  0 100  0  0
+ 0  0      0 9406540 2467196 3217552    0    0     0     0  263  361  0  0 99  0  0
+ 0  0      0 9406540 2467196 3217488    0    0     0     0  299  399  0  0 100  0  0
+
+###SCENARIO### The next chapter discusses the memory statistics, but we look at the CPU statistics now. The first group of
+statistics, or "CPU ticks," shows how the CPU has spent its time since system boot, where a "tick" is a unit
+of time. Although the condensed vmstat output only showed four CPU statesus, sy, id, and wathis
+shows how all the CPU ticks are distributed. In addition, we can see the total number of interrupts and
+context switches. One new addition is that of forks, which is basically the number of new processes that
+have been created since system boot.
+
+[ezolt@scrffy ~/edid]$ vmstat -s
+      1034320  total memory
+       998712  used memory
+       698076  active memory
+
+[root@linuxserver ~]# vmstat -s
+     15943160 K total memory
+       857156 K used memory
+      2963684 K active memory
+      3302064 K inactive memory
+      9405180 K free memory
+      2467348 K buffer memory
+      3213476 K swap cache
+      1048572 K total swap
+            0 K used swap
+      1048572 K free swap
+         8853 non-nice user cpu ticks
+          869 nice user cpu ticks
+         2919 system cpu ticks
+       460745 idle cpu ticks
+         7804 IO-wait cpu ticks
+            0 IRQ cpu ticks
+           28 softirq cpu ticks
+            0 stolen cpu ticks
+      3473303 pages paged in
+        16984 pages paged out
+            0 pages swapped in
+            0 pages swapped out
+       869752 interrupts
+      1459548 CPU context switches
+   1528543120 boot time
+         3296 forks
+
+###SCENARIO### top is invoked with the following command line:
+
+top [d delay] [C] [H] [i] [n iter] [b]
+
+top actually takes options in two modes: command-line options and runtime options. The command-line
+options determine how top displays its information. Table 2-3 shows the command-line options that
+influence the type and frequency of the performance statistics that top displays.
+
+                       Table 2-3. top Command-Line Options
+
+Option        Explanation
+
+d delay       Delay between statistic updates.
+
+n             Number of iterations before exiting. top updates the statistics iterations times.
+iterations
+
+i             Don't display processes that aren't using any of the CPU.
+
+H             Show all the individual threads of an application rather than just display a total for each
+              application.
+
+C             In a hyperthreaded or SMP system, display the summed CPU statistics rather than the
+              statistics for each CPU.
+
+Option Explanation
+
+l      This toggles whether the load average and uptime information will be updated and displayed.
+
+t      This toggles the display of how each CPU spends its time. It also toggles information about how
+       many processes are currently running. Shows all the individual threads of an application instead
+       of just displaying a total for each application.
+
+m      This toggles whether information about the system memory usage will be shown on the screen.
+       By default, the highest CPU consumers are displayed first. However, it might be more useful to
+       sort by other characteristics.
+
+
+###SCENARIO### top - CPU
+                       Table 2-11. top Performance Statistics
+
+Option     Explanation
+
+us         CPU time spent in user applications.
+
+sy         CPU time spent in the kernel.
+
+ni         CPU time spent in "nice"ed processes.
+
+id         CPU time spent idle.
+
+wa         CPU time spent waiting for I/O.
+
+hi         CPU time spent in the irq handlers.
+
+si         CPU time spent in the softirq handlers.
+
+load       The 1-minute, 5-minute, and 15-minute load average.
+average
+
+%CPU       The percentage of CPU that a particular process is consuming.
+
+PRI        The priority value of the process, where a higher value indicates a higher priority. RT
+           indicates that the task has real-time priority, a priority higher than the standard range.
+
+NI         The nice value of the process. The higher the nice value, the less the system has to execute
+           the process. Processes with high nice values tend to have very low priorities.
+
+WCHAN      If a process is waiting on an I/O, this shows which kernel function it is waiting in.
+
+TIME       The total amount CPU time (user and system) that this process has used since it started
+           executing.
+
+COMMAND    That command that this process is executing.
+
+S          This is the current status of a process, where the process is either sleeping (S), running (R),
+           zombied (killed but not yet dead) (Z), in an uninterruptable sleep (D), or being traced (T).
+
+
+###SCENARIO### procinfo is invoked with the following command:
+
+procinfo [-f] [-d] [-D] [-n sec] [-f file]
+
+Table 2-12 describes the different options that change the output and the frequency of the samples that
+procinfo displays.
+
+        Table 2-12. procinfo Command-Line Options
+
+Option Explanation
+
+-f      Runs procinfo in full-screen mode
+
+-d      Displays statistics change between samples rather than totals
+
+-D      Displays statistic totals rather than rate of change
+
+-n sec  Number of seconds to pause between each sample
+
+-Ffile  Sends the output of procinfo to a file
+
+Table 2-13 shows the CPU statistics that procinfo gathers.
+
+                         Table 2-13. procinfo CPU Statistics
+
+
+2.2.4.2 Example Usage
+
+Calling procinfo without any command options yields output similar to Listing 2.12. Without any options,
+procinfo displays only one screenful of status and then exits. procinfo is more useful when it is
+periodically updated using the -n second options. This enables you to see how the system's performance
+is changing in real time.
+
+[ezolt@scrffy ~/mail]$ procinfo
+Linux 2.4.18-3bigmem (bhcompile@daffy) (gcc 2.96 20000731 ) #1
+4CPU [scrffy]
+
+Memory:      Total        Used        Free      Shared    
+Buffers       Cached
+Mem:       1030784      987776       43008           0      
+35996       517504
+Swap:      2040244       17480     2022764
+Bootup: Thu Jun  3 09:20:22 2004      Load average: 0.47 0.32
+0.26 1/118 10378
+
+user  :       3:18:53.99   2.7%    page in :  1994292  disk 1: 
+    20r       0w
+nice  :       0:00:22.91   0.0%    page out:  2437543  disk 2: 
+247231r  131696w
+system:       3:45:41.20   3.1%    swap in :      996
+idle  :   4d 15:56:17.10  94.0%    swap out:     4374
+uptime:   1d  5:45:18.80          context : 64608366
+
+irq  0:  10711880 timer                  irq 12:   1319185 PS/2
+Mouse
+irq  1:     94931 keyboard               irq 14:   7144432 ide0
+irq  2:         0 cascade [4]            irq 16:        16
+aic7xxx
+irq  3:         1                        irq 18:   4152504
+nvidia
+irq  4:         1                        irq 19:         0
+usb-uhci
+irq  6:         2                        irq 20:   4772275
+es1371
+irq  7:         1                        irq 22:    384919
+aic7xxx
+irq  8:         1 rtc                    irq 23:   3797246
+usb-uhci, eth0
+
+As you can see from Listing 2.12, procinfo provides a reasonable overview of the system. We can see
+that, once again for the user, nice, system, and idle time, the system is not very busy. One interesting thing
+to notice is that procinfo claims that the system has spent more idle time than the system has been
+running (as indicated by the uptime). This is because the system actually has four CPUs, so for every day
+of wall time, four days of CPU time passes. The load average confirms that the system has been relatively
+work-free for the recent past. For the past minute, on the average, the system had less than one process
+ready to run; a load average of .47 indicates that a single process was ready to run only 47 percent of the
+time. On a four-CPU system, this large amount of CPU power is going to waste.
+
+procinfo also gives us a good view of what devices on the system are causing interrupts. We can see
+that the Nvidia card (nvidia), IDE controller (ide0), Ethernet device (eth0), and sound card (es1371)
+have a relatively high number of interrupts. This is as one would expect for a desktop workstation.
+
+###SCENARIO### 2.2.6. mpstat (Multiprocessor Stat)
+
+mpstat is a fairly simple command that shows you how your processors are behaving based on time. The
+biggest benefit of mpstat is that it shows the time next to the statistics, so you can look for a correlation
+between CPU usage and time of day.
+First, we ask mpstat to show us the CPU statistics for processor number 0. This is shown in Listing 2.13.
+
+Listing 2.13. 
+[ezolt@scrffy sysstat-5.1.1]$ ./mpstat -P 0 1 10
+Linux 2.6.8-1.521smp (scrffy)   10/20/2004
+
+07:12:02 PM  CPU   %user   %nice    %sys %iowait    %irq  
+%soft   %idle     intr/s
+07:12:03 PM    0    9.80    0.00    1.96    0.98    0.00 
+
+[root@linuxserver ~]# mpstat -P 0 1 10
+Linux 3.10.0-862.3.2.el7.x86_64 (linuxserver) 	09/06/18 	_x86_64_	(4 CPU)
+
+13:34:20     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+13:34:21       0    4.00    0.00    1.00    0.00    0.00    0.00    0.00    0.00    0.00   95.00
+13:34:22       0    3.06    0.00    1.02    0.00    0.00    0.00    0.00    0.00    0.00   95.92
+13:34:23       0    3.92    0.00    1.96    0.98    0.00    0.00    0.00    0.00    0.00   93.14
+
+
+[root@linuxserver ~]# mpstat -P ALL 1 2
+Linux 3.10.0-862.3.2.el7.x86_64 (linuxserver) 	09/06/18 	_x86_64_	(4 CPU)
+
+13:37:30     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+13:37:31     all    7.27    0.00    1.50    0.00    0.00    0.00    0.00    0.00    0.00   91.23
+13:37:31       0   11.11    0.00    1.01    0.00    0.00    0.00    0.00    0.00    0.00   87.88
+13:37:31       1    2.02    0.00    1.01    0.00    0.00    0.00    0.00    0.00    0.00   96.97
+13:37:31       2   13.00    0.00    3.00    0.00    0.00    0.00    0.00    0.00    0.00   84.00
+13:37:31       3    2.97    0.00    0.99    0.00    0.00    0.00    0.00    0.00    0.00   96.04
+
+###SCENARIO### sar can be invoked with the following command line:
+
+sar [options] [ delay [ count ] ]
+
+Although sar reports about many different areas of Linux, the statistics are of two different forms. One set
+of statistics is the instantaneous value at the time of the sample. The other is a rate since the last sample. 
+Table 2-16 describes the command-line options of sar.
+
+                       Table 2-16. sar Command-Line Options
+
+Option               Explanation
+
+-c                   This reports information about how many processes are being created per
+                     second.
+
+-I {irq | SUM |      This reports the rates that interrupts have been occurring in the system.
+ALL | XALL }
+
+-P {cpu | ALL }      This option specifies which CPU the statistics should be gathered from. If this
+                     isn't specified, the system totals are reported.
+
+-q                   This reports information about the run queues and load averages of the
+                     machine.
+
+-u                   This reports information about CPU utilization of the system. (This is the
+                     default output.)
+
+-w                   This reports the number of context switches that occurred in the system.
+
+-o filename          This specifies the name of the binary output file that will store the performance
+                     statistics.
+
+-f filename          This specifies the filename of the performance statistics.
+
+delay                The amount of time to wait between samples.
+
+count                The total number of samples to record.
+
+sar offers a similar set (with different names) of the system-wide CPU performance statistics that we have
+seen in the proceeding tools. The list is shown in Table 2-17.
+
+nice     This is the percentage of time that the CPU has spent during the previous sample running
+         low-priority (or nice) processes.
+
+runq-sz  This is the size of the run queue when the sample was taken.
+
+plist-s  This is the number of processes present (running, sleeping, or waiting for I/O) when the
+z
+
+iowait   This is the percentage of time that the CPU has spent during the previous sample waiting on
+         I/O.
+
+proc/s   This is the number of new processes created per second. (This is the same as the forks
+         statistic from vmstat.)
+
+cswch    This is the number of context switches per second.
+
+intr/s   The number of interrupts fired per second.
+
+[root@linuxserver ~]# sar -o /tmp/apache_test 1 3
+Linux 3.10.0-862.3.2.el7.x86_64 (linuxserver) 	09/06/18 	_x86_64_	(4 CPU)
+
+13:56:13        CPU     %user     %nice   %system   %iowait    %steal     %idle
+13:56:14        all      3.27      0.00      2.01      0.25      0.00     94.47
+13:56:15        all      2.27      0.00      1.26      0.25      0.00     96.22
+
+
+[root@linuxserver ~]# sar -f /tmp/apache_test
+Linux 3.10.0-862.3.2.el7.x86_64 (linuxserver) 	09/06/18 	_x86_64_	(4 CPU)
+
+13:56:13        CPU     %user     %nice   %system   %iowait    %steal     %idle
+13:56:14        all      3.27      0.00      2.01      0.25      0.00     94.47
+13:56:15        all      2.27      0.00      1.26      0.25      0.00     96.22
+
+
+[root@linuxserver ~]# sar -f /tmp/apache_test  -h
+Usage: sar [ options ] [ <interval> [ <count> ] ]
+Main options and reports:
+	-b	I/O and transfer rate statistics
+	-B	Paging statistics
+	-d	Block device statistics
+	-H	Hugepages utilization statistics
+	-I { <int> | SUM | ALL | XALL }
+		Interrupts statistics
+	-m { <keyword> [,...] | ALL }
+		Power management statistics
+		Keywords are:
+		CPU	CPU instantaneous clock frequency
+		FAN	Fans speed
+		FREQ	CPU average clock frequency
+		IN	Voltage inputs
+		TEMP	Devices temperature
+		USB	USB devices plugged into the system
+	-n { <keyword> [,...] | ALL }
+		Network statistics
+		Keywords are:
+		DEV	Network interfaces
+		EDEV	Network interfaces (errors)
+		NFS	NFS client
+		NFSD	NFS server
+		SOCK	Sockets	(v4)
+		IP	IP traffic	(v4)
+		EIP	IP traffic	(v4) (errors)
+		ICMP	ICMP traffic	(v4)
+		EICMP	ICMP traffic	(v4) (errors)
+		TCP	TCP traffic	(v4)
+		ETCP	TCP traffic	(v4) (errors)
+		UDP	UDP traffic	(v4)
+		SOCK6	Sockets	(v6)
+		IP6	IP traffic	(v6)
+		EIP6	IP traffic	(v6) (errors)
+		ICMP6	ICMP traffic	(v6)
+		EICMP6	ICMP traffic	(v6) (errors)
+		UDP6	UDP traffic	(v6)
+	-q	Queue length and load average statistics
+	-r	Memory utilization statistics
+	-R	Memory statistics
+	-S	Swap space utilization statistics
+	-u [ ALL ]
+		CPU utilization statistics
+	-v	Kernel table statistics
+	-w	Task creation and system switching statistics
+
+
+In Listing 2.20, sar samples the information two times,
+with one second between them. In this case, we ask sar to show us the total number of context switches
+and process creations that occur every second. We also ask sar for information about the load average.
+We can see in this example that this machine has 163 process that are in memory but not running. For the
+past minute, on average 1.12 processes have been ready to run.
+[ezolt@scrffy manuscript]$ sar -w -c -q 1 2
+Linux 2.6.8-1.521smp (scrffy)   10/20/2004
+
+08:23:29 PM    proc/s
+08:23:30 PM      0.00
+
+08:23:29 PM   cswch/s
+08:23:30 PM    594.00
+
+08:23:29 PM   runq-sz  plist-sz   ldavg-1    ldavg-5  ldavg-15
+08:23:30 PM         0       163      1.12       1.17      1.17
+	-W	Swapping statistics
+	-y	TTY device statistics
+
+[root@linuxserver ~]# sar -w -q 1 2
+Linux 3.10.0-862.3.2.el7.x86_64 (linuxserver) 	09/06/18 	_x86_64_	(4 CPU)
+
+14:02:15       proc/s   cswch/s
+14:02:16         0.00   3262.00
+
+14:02:15      runq-sz  plist-sz   ldavg-1   ldavg-5  ldavg-15   blocked
+14:02:16            0       584      0.47      0.35      0.42         0
+
+###SCENARIO### 3.1.2. Memory Subsystem (Virtual Memory)
+
+Any given Linux system has a certain amount of RAM or physical memory. When addressing this
+physical memory, Linux breaks it up into chunks or "pages" of memory. When allocating or moving
+around memory, Linux operates on page-sized pieces rather than individual bytes. When reporting some
+memory statistics, the Linux kernel reports the number of pages per second, and this value can vary
+depending on the architecture it is running on
+
+
+On the IA32 architecture, the page size is 4KB. In rare cases, these page-sized chunks of memory can
+cause too much overhead to track, so the kernel manipulates memory in much bigger chunks, known as
+HugePages. These are on the order of 2048KB rather than 4KB and greatly reduce the overhead for
+managing very large amounts of memory. Certain applications, such as Oracle, use these huge pages to
+load an enormous amount of data in memory while minimizing the overhead that the Linux kernel needs
+to manage it. If HugePages are not completely filled with data, these can waste a significant amount of
+memory. A half-filled normal page wastes 2KB of memory, whereas a half-filled HugePage can waste
+1,024KB of memory.
+
+###SCENARIO### 3.1.2.2 Buffers and Cache (Too Much Physical Memory)
+
+Alternatively, if your system has much more physical memory than required by your applications, Linux
+will cache recently used files in physical memory so that subsequent accesses to that file do not require
+an access to the hard drive. This can greatly speed up applications that access the hard drive frequently,
+which, obviously, can prove especially useful for frequently launched applications. The first time the
+application is launched, it needs to be read from the disk; if the application remains in the cache,
+however, it needs to be read from the much quicker physical memory. This disk cache differs from the
+processor cache mentioned in the previous chapter. Other than oprofile, valgrind, and
+kcachegrind  , most tools that report statistics about "cache" are actually referring to disk cache.
+
+In addition to cache, Linux also uses extra memory as buffers. To further optimize applications, Linux
+sets aside memory to use for data that needs to be written to disk. These set-asides are called buffers. If
+an application has to write something to the disk, which would usually take a long time, Linux lets the
+application continue immediately but saves the file data into a memory buffer. At some point in the future,
+the buffer is flushed to disk, but the application can continue immediately.
+
+It can be discouraging to see very little free memory in a system because of the cache and buffer usage,
+but this is not necessarily a bad thing. By default, Linux tries to use as much of your memory as possible.
+This is good. If Linux detects any free memory, it caches applications and data in the free memory to
+speed up future accesses. Because it is usually a few orders of magnitude faster to access things from
+memory rather than disk, this can dramatically improve overall performance. When the system needs the
+cache memory for more important things, the cache memory is erased and given to the system.
+Subsequent access to the object that was previously cached has to go out to disk to be filled.
+
+
+###SCENARIO### 3.1.2.3 Active Versus Inactive Memory
+
+Active memory is currently being used by a process. Inactive memory is memory that is allocated but
+has not been used for a while. Nothing is essentially different between the two types of memory. When
+required, the Linux kernel takes a process's least recently used memory pages and moves them from the
+active to the inactive list. When choosing which memory will be swapped to disk, the kernel chooses
+from the inactive memory list.
+
+###SCENARIO### 3.1.2.4 High Versus Low Memory
+
+For 32-bit processors (for example, IA32) with 1GB or more of physical of memory, Linux must
+manage the physical memory as high and low memory. The high memory is not directly accessible by the
+Linux kernel and must be mapped into the low-memory range before it can be used. This is not a
+problem with 64-bit processors (such as AMD64/ EM6T, Alpha, or Itanium) because they can directly
+address additional memory that is available in current systems.
+
+###SCENARIO### 3.1.2.5 Kernel Usage of Memory (Slabs)
+
+In addition to the memory that applications allocate, the Linux kernel consumes a certain amount for
+bookkeeping purposes. This bookkeeping includes, for example, keeping track of data arriving from
+network and disk I/O devices, as well as keeping track of which processes are running and which are
+sleeping. To manage this bookkeeping, the kernel has a series of caches that contains one or more slabs
+of memory. Each slab consists of a set of one or more objects. The amount of slab memory consumed
+by the kernel depends on which parts of the Linux kernel are being used, and can change as the type of
+load on the machine changes.
+###SCENARIO### 3.2.1. vmstat (Virtual Memory Statistics) II
+
+As you have seen before, vmstat can provide information about many different performance aspects of a
+systemalthough its primary purpose, as shown next, is to provide information about virtual memory
+system performance. In addition to the CPU performance statistics described in the previous chapter, it
+can also tell you the following:
+
+   ·  How much swap is being used
+
+   ·  How the physical memory is being used
+
+   ·  How much memory is free
+
+vmstat [-a] [-s] [-m]
+
+-a           This changes the default output of memory statistics to indicate the active/inactive amount
+             of memory rather than information about buffer and cache usage.
+
+
+-m (procps   This prints out the kernel's slab info. This is the same information that can be retrieved by
+3.2 or       typing cat/proc/slabinfo. This describes in detail how the kernel's memory is
+greater)     allocated and can be helpful to determine what area of the kernel is consuming the most
+             memory.
+
+
+[root@linuxserver ~]# vmstat 1 2
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0      0 2836052 4524132 6784588    0    0   113   171  420 1058  6  1 92  0  0
+ 0  0      0 2835740 4524132 6784876    0    0     0     0 1485 2454  2  1 97  0  0
+
+[root@linuxserver ~]# 
+[root@linuxserver ~]# 
+[root@linuxserver ~]# vmstat -a 1 2
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free  inact active   si   so    bi    bo   in   cs us sy id wa st
+ 1  0      0 2836260 6010372 6545720    0    0   113   171  420 1058  6  1 92  0  0
+ 0  0      0 2835632 6010816 6545852    0    0     0     0 1453 2366  2  1 97  0  0
+
+[root@linuxserver ~]# vmstat -m 1 1
+Cache                       Num  Total   Size  Pages
+fat_inode_cache             572    572    720     22
+fat_cache                   102    102     40    102
+fuse_request                 80     80    400     20
+fuse_inode                  567    567    768     21
+
+Column        Explanation
+
+swpd          The total amount of memory currently swapped to disk.
+
+free          The amount of physical memory not being used by the operating system or applications.
+
+buff          The size (in KB) of the system buffers, or memory used to store data waiting to be
+              saved to disk. This memory allows an application to continue execution immediately
+              after it has issued a write call to the Linux kernel (instead of waiting until the data has
+              been committed to disk).
+
+cache         The size (in KB) of the system cache or memory used to store data previously read
+              from disk. If an application needs this data again, it allows the kernel to fetch it from
+              memory rather than disk, thus increasing performance.
+
+active        The amount of memory actively being used. The active/ inactive statistics are orthogonal
+              to the buffer/cache; buffer and cache memory can be active and inactive.
+
+inactive      The amount of inactive memory (in KB), or memory that has not been used for a while
+              and is eligible to be swapped to disk.
+
+si            The rate of memory (in KB/s) that has been swapped in from disk during the last sample.
+
+so            The rate of memory (in KB/s) that has been swapped out to disk during the last sample.
+
+pages         The amount of memory (in pages) read from the disk(s) into the system buffers. (On
+paged in
+              most IA32 systems, a page is 4KB.)
+
+pages         The amount of memory (in pages) written to the disk(s) from the system cache. (On
+paged out
+              most IA32 systems, a page is 4KB.)
+
+pages         The amount of memory (in pages) read from swap into system memory.
+swapped in
+
+pages         The amount of memory (in pages) written from system memory to the swap.
+swapped
+in/out
+
+used swap     The amount of swap currently being used by the Linux kernel.
+
+free swap     The amount of swap currently available for use.
+
+total swap    The total amount of swap that the system has; this is also the sum of used swap plus free
+              swap.
+
+[root@linuxserver ~]# vmstat -m 1 1
+Cache                       Num  Total   Size  Pages
+fat_inode_cache             572    572    720     22
+fat_cache                   102    102     40    102
+fuse_request                 80     80    400     20
+fuse_inode                  567    567    768     21
+nf_conntrack_ffffffff8c6fc940    275    300    320     25
+rpc_inode_cache              25     25    640     25
+kcopyd_job                    0      0   3312      9
+dm_uevent                     0      0   2608     12
+kvm_async_pf                  0      0    136     30
+kvm_vcpu                      0      0  12992      2
+kvm_mmu_page_header           0      0    168     24
+ext4_groupinfo_4k          1440   1440    136     30
+ext4_inode_cache          61039  61039   1032     31
+ext4_xattr                  322    322     88     46
+ext4_allocation_context     128    128    128     32
+ext4_io_end                 728    728     72     56
+ext4_extent_status        17340  17340     40    102
+jbd2_journal_handle         340    340     48     85
+jbd2_journal_head          1044   1044    112     36
+jbd2_revoke_table_s         512    512     16    256
+jbd2_revoke_record_s        512    512     32    128
+i915_dependency             256    256     64     64
+drm_i915_gem_request        728    728    576     28
+drm_i915_gem_object         938   1008    768     21
+ip6_dst_cache               252    252    448     36
+RAWv6                       104    104   1216     26
+UDPLITEv6                     0      0   1216     26
+UDPv6                       104    104   1216     26
+Cache                       Num  Total   Size  Pages
+tw_sock_TCPv6                 0      0    256     32
+TCPv6                        60     60   2176     15
+cfq_queue                     0      0    232     35
+bsg_cmd                       0      0    312     26
+mqueue_inode_cache           36     36    896     36
+hugetlbfs_inode_cache        52     52    608     26
+configfs_dir_cache            0      0     88     46
+dquot                       128    128    256     32
+userfaultfd_ctx_cache         0      0    192     21
+fanotify_event_info         730    730     56     73
+pid_namespace                 0      0   2200     14
+posix_timers_cache           66     66    248     33
+UDP-Lite                      0      0   1088     30
+flow_cache                    0      0    144     28
+xfrm_dst_cache                0      0    576     28
+UDP                         120    120   1088     30
+tw_sock_TCP                 128    128    256     32
+TCP                         192    208   1984     16
+dax_cache                    21     21    768     21
+blkdev_queue                 39     39   2424     13
+blkdev_ioc                  273    273    104     39
+user_namespace                0      0    480     34
+dmaengine-unmap-128          30     30   1088     30
+sock_inode_cache           1196   1225    640     25
+fsnotify_mark_connector     680    680     24    170
+net_namespace                18     18   5248      6
+shmem_inode_cache          2528   2592    680     24
+Acpi-ParseExt              4760   4760     72     56
+Cache                       Num  Total   Size  Pages
+Acpi-State                  408    408     80     51
+task_delay_info             756    756    112     36
+taskstats                   120    120    328     24
+proc_inode_cache           7772   7848    656     24
+sigqueue                    100    100    160     25
+bdev_cache                  156    156    832     39
+kernfs_node_cache         29036  29036    120     34
+mnt_cache                   475    630    384     21
+inode_cache               17069  17253    592     27
+dentry                   428830 428904    192     21
+iint_cache                    0      0    128     32
+selinux_inode_security    14994  14994     40    102
+buffer_head              1264565 1264887    104     39
+vm_area_struct            39388  40478    216     37
+mm_struct                   200    200   1600     20
+files_cache                1060   1200    640     25
+signal_cache                364    364   1152     28
+sighand_cache               312    315   2112     15
+task_xstate                 780    780    832     39
+task_struct                 619    640   4048      8
+anon_vma                  12590  13515     80     51
+shared_policy_node         7480   7480     48     85
+numa_policy                  31     31    264     31
+radix_tree_node           49795  50036    584     28
+idr_layer_cache             375    375   2112     15
+dma-kmalloc-8192              0      0   8192      4
+dma-kmalloc-4096              0      0   4096      8
+dma-kmalloc-2048              0      0   2048     16
+Cache                       Num  Total   Size  Pages
+dma-kmalloc-1024              0      0   1024     32
+dma-kmalloc-512              64     64    512     32
+dma-kmalloc-256               0      0    256     32
+dma-kmalloc-128               0      0    128     32
+dma-kmalloc-64                0      0     64     64
+dma-kmalloc-32              128    128     32    128
+dma-kmalloc-16                0      0     16    256
+dma-kmalloc-8                 0      0      8    512
+dma-kmalloc-192               0      0    192     21
+dma-kmalloc-96                0      0     96     42
+kmalloc-8192                 72     72   8192      4
+kmalloc-4096                191    224   4096      8
+kmalloc-2048                910    912   2048     16
+kmalloc-1024               3394   3456   1024     32
+kmalloc-512                1510   1792    512     32
+kmalloc-256               13221  13984    256     32
+kmalloc-192                4810   6384    192     21
+kmalloc-128                6688   6688    128     32
+kmalloc-96                 2268   2268     96     42
+kmalloc-64                46882  47680     64     64
+kmalloc-32                 4608   4608     32    128
+kmalloc-16                 6912   6912     16    256
+kmalloc-8                  7680   7680      8    512
+kmem_cache_node             320    320     64     64
+kmem_cache                  192    192    256     32
+[root@linuxserver ~]# 
+
+[root@linuxserver ~]# vmstat -m 2 | egrep -e "UDP|TCP"
+UDPLITEv6                     0      0   1216     26
+UDPv6                       104    104   1216     26
+tw_sock_TCPv6                 0      0    256     32
+TCPv6                        60     60   2176     15
+UDP-Lite                      0      0   1088     30
+UDP                         120    120   1088     30
+tw_sock_TCP                 128    128    256     32
+TCP                         192    208   1984     16
+
+
+In Listing 3.3, we ask vmstat to display information about the number of active and inactive pages. The
+amount of inactive pages indicates how much of the memory could be swapped to disk and how much is
+currently being used. In this case, we can see that 1310MB of memory is active, and only 78MB is
+considered inactive. This machine has a large amount of memory, and much of it is being actively used.
+
+Listing 3.3. 
+
+bash-2.05b$ vmstat -a
+procs -----------memory---------- ---swap-- -----io----
+--system-- ----cpu----
+ r  b   swpd   free   inact active    si   so    bi    bo   in  
+cs us sy id wa
+ 2  1 514004   5640  79816 1341208    33   31   204   247 1111
+1548  8  5 73 14
+
+Next, in Listing 3.4, we look at a different system, one that is actively swapping data in and out of
+memory. The si column indicates that swap data has been read in at a rate of 480KB, 832KB, 764KB,
+344KB, and 512KB during each of those sample periods. The so column indicates that memory data has
+been written to swap at a rate of 9KB, 0KB, 916KB, 0KB, 1068KB, 444KB, 792KB, during each of
+the samples. These results could indicate that the system does not have enough memory to handle all the
+running processes. A simultaneously high swap-in and swap-out rate can occur when a process's memory
+is being saved to make way for an application that had been previously swapped to disk.
+
+
+Listing 3.4. 
+
+[ezolt@localhost book]$ vmstat 1 100
+
+procs -----------memory---------- ---swap-- -----io----
+--system-- ----cpu----
+
+ r  b   swpd   free   buff  cache    si   so    bi    bo   in  
+cs us sy id wa
+
+ 2  1 131560   2320   8640  53036     1    9   107    69 1137 
+426 10  7 74  9
+
+ 0  1 131560   2244   8640  53076   480    0    716     0 1048 
+207  6  1  0 93
+
+ 1  2 132476   3424   8592  53272   832  916   1356   916 1259 
+692 11  4  0 85
+
+ 1  0 132476   2400   8600  53280   764    0   1040    40 1288 
+762 14  5  0 81
+
+ 0  1 133544   2656   8624  53392   344 1068   1096  1068 1217 
+436  8  3  5 84
+ 0  1 133988   2300   8620  54288   512  444   1796   444 1090 
+230  5  1  2 92
+
+
+Finally, in Listing 3.6, we see that vmstat can provide information about how the Linux kernel allocates its
+memory. As previously described, the Linux kernel has a series of "slabs" to hold its dynamic data
+structures. vmstat displays each of the slabs (Cache), shows how many of the elements are being used
+(Num), shows how many are allocated (Total), shows the size of each element (Size), and shows the
+amount of memory in pages (Pages) that the total slab is using. This can be helpful when tracking down
+exactly how the kernel is using its memory.
+
+Listing 3.6. 
+
+bash-2.05b$ vmstat -m
+
+Cache                          Num   Total   Size   Pages
+udf_inode_cache                  0       0    416       9
+fib6_nodes                       7     113     32     113
+ip6_dst_cache                    9      17    224      17
+ndisc_cache                      1      24    160      24
+raw6_sock                        0       0    672       6
+udp6_sock                        0       0    640       6
+tcp6_sock                      404     441   1120       7
+ip_fib_hash                     39     202     16     202
+ext3_inode_cache              1714    3632    512       8
+
+
+[root@linuxserver ~]# vmstat -m | head
+Cache                       Num  Total   Size  Pages
+fat_inode_cache             572    572    720     22
+fat_cache                   102    102     40    102
+fuse_request                 80     80    400     20
+fuse_inode                  567    567    768     21
+nf_conntrack_ffffffff8c6fc940    275    300    320     25
+rpc_inode_cache              25     25    640     25
+kcopyd_job                    0      0   3312      9
+dm_uevent                     0      0   2608     12
+kvm_async_pf                  0      0    136     30
+
+sort by Pages
+root@linuxserver ~]# vmstat -m | head -1
+Cache                       Num  Total   Size  Pages
+[root@linuxserver ~]# vmstat -m | sort -k5 -rn | head
+kmalloc-8                  7680   7680      8    512
+dma-kmalloc-8                 0      0      8    512
+kmalloc-16                 6912   6912     16    256
+jbd2_revoke_table_s         512    512     16    256
+dma-kmalloc-16                0      0     16    256
+fsnotify_mark_connector     680    680     24    170
+kmalloc-32                 4608   4608     32    128
+jbd2_revoke_record_s        512    512     32    128
+dma-kmalloc-32              128    128     32    128
+selinux_inode_security    14994  14994     40    102
+[root@linuxserver ~]# 
+
+###SCENARIO### top - MEMORY - 3.2.2.1 Memory Performance-Related Options
+
+top does not have any special command-line options that manipulate its display of memory statistics. It is
+invoked with the following command line:
+
+top
+
+Option Explanation
+
+m      This toggles whether information about the system memory usage will be shown on the screen.
+
+M      Sorts the tasks by the amount of memory they are using. Because processes may have allocated
+       more memory than they are using, this sorts by resident set size. Resident set size is the amount
+       the processes are actually using rather than what they have simply asked for.
+
+Table 3-4 describes the memory performance statistics that top can provide for both the entire system
+and individual processes. top has two different versions, 2.x and 3.x, which have slightly different names
+for output statistics. Table 3-4 describes the names for both versions.
+
+                    Table 3-4. top Memory Performance Statistics
+
+Option             Explanation
+
+%MEM               This is the percentage of the system's physical memory that this process is using.
+
+SIZE (v 2.x)       This is the total size of the process's virtual memory usage. This includes all the
+                   memory that the application has allocated but is not using.
+VIRT (v 3.x)
+
+SWAP               This is the amount of swap (in KB) that the process is using.
+
+RSS (v 2.x)        This is the amount of physical memory that the application is actually using.
+
+RES (v 3.x)
+
+TRS (v 2.x)        The total amount of physical memory (in KB) that the process's executable code
+                   is using.
+CODE (v 3.x)
+
+DSIZE (v 2.x)      The total amount of memory (in KB) dedicated to a process's data and stack.
+
+DATA (v 3.x)
+
+SHARE (v 2.x)      The total amount of memory (in KB) that can be shared with other processors.
+
+SHR (v 3.x)
+
+D (v 2.x)          The number of pages that are dirty and need to be flushed to disk.
+
+nDRT (v 3.x)
+
+Mem:               Of the physical memory, this indicates the total amount, the used amount, and the
+                   free amount.
+total, used,
+free
+
+swap: total,       Of the swap, this indicates the total amount, the used amount, and the free amount.
+used, free
+
+active (v 2.x)     The amount of physical memory currently active.
+
+inactive (v        The amount of physical memory that is inactive and hasn't been used in a while.
+2.x)
+
+buffers            The total amount of physical memory (in KB) used to buffer values to be written
+                   to disk.
+
+###SCENARIO### procinfo MEMORY Statistics
+
+procinfo displays the basic memory system memory statistics, similar to top and vmstat. These are
+shown in Table 3-5.
+
+                          Table 3-5. procinfo MEMORY Statistics
+
+Option    Explanation
+
+Total     This is the total amount of physical memory.
+
+Used      This is the amount of physical memory in use.
+
+Free      This is the amount of unused physical memory.
+
+Shared    This is an obsolete value and should be ignored.
+
+Buffers   This is the amount of physical memory used as buffers for disk writes.
+
+Page in   The number of blocks (usually 1KB) read from disk. (This is broken on 2.6.x kernels.)
+
+Page out  The number of blocks (usually 1KB) written to disk. (This is broken on 2.6.x kernels.)
+
+Swap in   The number of memory pages read in from swap. (This statistic is broken on 2.6.x kernels.)
+
+Swap out  The number of memory pages written to swap. (This statistic is broken on 2.6.x kernels.)
+
+ezolt@localhost procinfo-18]$ ./procinfo
+Linux 2.6.6-1.435.2.3smp (bhcompile@tweety.build.redhat.com)
+(gcc 3.3.3 20040412 )
+#1
+1CPU [localhost]
+
+Memory:      Total        Used        Free      Shared     
+Buffers
+Mem:        320468      308776       11692           0       
+11604
+Swap:       655192      220696      434496
+###SCENARIO### free - 3.2.5.1 Memory Performance-Related Options
+
+free can be invoked using the following command line:
+
+free [-l] [-t] [-s delay ] [-c count ]
+
+Table 3-7. free Memory Statistics
+
+Statistic        Explanation
+
+ 
+
+Total            This is the total amount of physical memory and swap.
+
+Used             This is the amount of physical memory and swap in use.
+
+Free             This is the amount of unused physical memory and swap.
+
+Shared           This is an obsolete value and should be ignored.
+
+Buffers          This is the amount of physical memory used as buffers for disk writes.
+
+Cached           This is the amount of physical memory used as cache for disk reads.
+
+-/+              In the Used column, this shows the amount of memory that would be used if
+buffers/cache
+                 buffers/cache were not counted as used memory. In the Free column, this shows
+                 the amount of memory that would be free if buffers/cache were counted as free
+                 memory.
+
+Low              The total amount of low memory or memory directly accessible by the kernel.
+
+High             The total amount of high memory or memory not directly accessible by the kernel.
+
+Totals           This shows the combination of physical memory and swap for the Total, Used, and
+                 Free columns.
+
+
+As mentioned previously, Linux tries to use all the available memory if possible to cache data and
+applications. In Listing 3.10, free tells us that we are currently using 234,720 bytes of memory; however,
+if you ignore the buffers and cache, we are only using 122,772 bytes of memory. The opposite is true of
+the free column. We currently have 150,428 bytes of memory free; if you also count the buffers and
+cached memory (which you can, because Linux throws away those buffers if the memory is needed),
+however, we have 262,376 bytes of memory free.
+
+Listing 3.10. 
+
+[ezolt@wintermute procps-3.2.0]$ free
+             total       used       free     shared    buffers 
+   cached
+Mem:        385148     234720     150428          0       8016 
+   103932
+-/+ buffers/cache:     122772     262376
+Swap:       394080      81756     312324
+
+[root@linuxserver ~]# free -h
+              total        used        free      shared  buff/cache   available
+Mem:            15G        1.7G        2.7G        295M         10G         12G
+Swap:          1.0G          0B        1.0G
+[root@linuxserver ~]# 
+
+Although you could just total the columns yourself, the -t flag shown in Listing 3.11 tells you the totals
+when adding both swap and real memory. In this case, the system had 376MB of physical memory and
+384MB of swap. The total amount of memory available on the system is 376MB plus 384MB, or
+~760MB. The total amount of free memory was 134MB of physical memory plus 259MB of swap,
+yielding a total of 393MB of free memory.
+
+Listing 3.11. 
+
+[ezolt@wintermute procps-3.2.0]$ free -t
+             total       used       free     shared    buffers 
+   cached
+Mem:        385148     247088     138060          0       9052 
+   115024
+-/+ buffers/cache:     123012     262136
+Swap:       394080      81756     312324
+Total:      779228     328844     450384
+
+[root@linuxserver ~]# free -h -t
+              total        used        free      shared  buff/cache   available
+Mem:            15G        1.7G        2.7G        291M         10G         12G
+Swap:          1.0G          0B        1.0G
+Total:          16G        1.7G        3.7G
+[root@linuxserver ~]# 
+
+Finally, free tells you the amount of high and low memory that the system is using. This is mainly useful on
+32-bit machines (such as IA32) with 1GB or more of physical memory. (32-bit machines are the only
+machines that will have high memory.) Listing 3.12 shows a system with a very small amount of free
+memory, 6MB in total. It shows a system with 876MB of low memory and 640MB of high memory. This
+system also has much more cached memory than buffer memory, suggesting that it may be aggressively
+writing data to disk rather than leaving it in the buffer cache a long time.
+
+Listing 3.12. 
+
+fas% free -l
+             total       used       free     shared    buffers 
+   cached
+Mem:       1552528    1546472       6056          0       7544 
+   701408
+Low:        897192     892800       4392
+High:       655336     653672       1664
+-/+ buffers/cache:     837520     715008
+Swap:      2097096     566316    1530780
+
+[root@linuxserver ~]# free -hl
+              total        used        free      shared  buff/cache   available
+Mem:            15G        1.7G        2.7G        295M         10G         12G
+Low:            15G         12G        2.7G
+High:            0B          0B          0B
+Swap:          1.0G          0B        1.0G
+[root@linuxserver ~]# 
+[root@linuxserver ~]# 
+[root@linuxserver ~]# free -hl -w
+              total        used        free      shared     buffers       cache   available
+Mem:            15G        1.7G        2.7G        295M        4.3G        6.5G         12G
+Low:            15G         12G        2.7G
+High:            0B          0B          0B
+Swap:          1.0G          0B        1.0G
+[root@linuxserver ~]# 
+[root@linuxserver ~]# 
+
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+

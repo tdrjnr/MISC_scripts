@@ -1,0 +1,2 @@
+#!/bin/bash -x
+collectl -oD --vmstat -c3 -p /var/log/collectl/linuxserver-20180527-191035.raw.gz --from 19:10-19:13

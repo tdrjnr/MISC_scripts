@@ -1,0 +1,68 @@
+I wanted to compare "netstat -s" data between "before" and "after".
+For example, I usually do "netstat -s" before I run a benchmark, and
+do it again after the benchmark.  I wanted to easily see how many 
+packets were retransmitted during the run, for example.  
+
+I was looking for such a script or program, but I could not find it.
+So, I wrote one, and I call it "beforeafter" (Is there a better
+name?).  
+
+Here's an exmple: 
+
+$ date > netstat.before 
+$ netstat -s >> netstat.before 
+$ cat netstat.before 
+
+Wed Dec 24 09:26:59 PST 1997 
+tcp: 
+        43722938 packets sent 
+                33228589 data packets (3645003285 bytes) 
+                5161 data packets (23909373 bytes) retransmitted 
+                10516156 ack-only packets (598441 delayed) 
+        . . . . . . 
+
+$ Run your benchmark/test here. 
+
+$ date > netstat.after 
+$ netstat -s >> netstat.after 
+$ cat netstat.after 
+ 
+Wed Dec 24 09:43:56 PST 1997 
+tcp: 
+        53377343 packets sent 
+                40535998 data packets (1229324839 bytes) 
+                5959 data packets (28516929 bytes) retransmitted 
+                12865772 ack-only packets (765717 delayed) 
+        . . . . . . 
+
+$ beforeafter netstat.before netstat.after 
+
+Wed Dec 0 0:17:4294967293 PST 0
+tcp:
+        9654405 packets sent
+                7307409 data packets (1879288850 bytes)
+                798 data packets (4607556 bytes) retransmitted
+                2349616 ack-only packets (167276 delayed)
+        . . . . . . 
+ 
+
+You can tell time interval between "before" and "after" was about 17
+minutes, and there were 798 retransmitted packets out of 9654405
+packets sent.  Also notice that it calculated the "retransmitted
+bytes" by assuming the netstat values were wrapped around at 2^32:
+
+    before: 3645003285 bytes
+    after:  1229324839 bytes
+
+    (2^32 + 1229324839) - 3645003285 ==> 1879288850
+
+This assumption is usually good.  However, for cases like # of
+bytes, this might be wrong, especially for a long run.  During the
+17-minute run, the byte counter might have wrapped around several
+times, and probably did.
+
+The "beforeafter" is a general purpose tool, and it should work for
+other than netstat data.  It just subtracts the numbers in one file
+from the corresponding numbers in another file.  Currently, it assumes
+that all numbers are non-negative integers and they wrap around to 0
+at 2^32.

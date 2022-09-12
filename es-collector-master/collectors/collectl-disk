@@ -1,0 +1,5 @@
+#!/bin/bash -x
+collectl -sd --verbose -c3
+collectl -sD --verbose -c3
+
+#collectl -oD -sD --dskfilt sd
