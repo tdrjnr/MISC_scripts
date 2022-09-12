@@ -1,0 +1,296 @@
+###SCENARIO### #!/bin/bash
+
+servers="serverA serverB serverC serverN"
+for server in $servers; do
+  ssh $server "hostname && uptime"
+done
+wait
+
+###SCENARIO### 
+#!/bin/bash
+
+servers="serverA serverB serverC serverN"
+for server in $servers; do
+    ssh $server "bash -s" < ./backup.sh &
+done
+wait
+Here's the differences between the first iteration and this one:
+
+The command that we're running on the remote machine is bash -s instead of the remote copy of backup.sh.
+We're passing the contents of the local copy of the backup.sh command to the remote bash.sh command 's standard input using the < operator.
+The remote bash process then executes the standard input because we passed it the -s switch.
+
+###SCENARIO### 
+
+logdir=`mktemp -d`
+bunch=200
+
+IFS=$'\n'
+for hosts in $(< hosts.lst xargs -r -L "$bunch"); do
+   IFS=" ";
+   for host in $hosts; do
+      ssh -n -o BatchMode=yes "$host" './runScript.sh' 1>"$logdir/$host.log" 2>&1 &
+   done
+   wait
+done
+
+Assuming the 100s of hosts are listed one/line in the hosts.lst file and then from these a bunch are selected in one time (200), and on each of these 200 hosts are spawned your runScript.sh using ssh in batch mode and at the same time preserving the stdout+stderr spewing forth from each of these backgrounded job into a file with the name of host in the directory $logdir, which may be examined as and when required.
+
+Finally we wait for one bunch to get over before we launch the next bunch, by means of the wait command at the end of the inner for loop.
+
+###SCENARIO###  MISC COMMANDS VARIABLES
+echo "---> Running command on $hostname as $user:"
+JAVA_PID=`pgrep -f -u tomcat /usr/lib/jvm/jre/bin/java`
+host=`hostname --fqdn`
+TIME=$(date +"%Y%m%d_%H%M%S")
+MYDATE="$(/bin/date +'%Y.%m.%d.%m.%H.%M')"	# Date and time now
+MYNAME=$(basename $0)
+WHOAMI=$(/usr/bin/whoami)		# The user running the script
+HOSTID=$(/usr/bin/hostid)		# The Hostid of this server
+MYHOSTNAME=$(/bin/uname -n)		# The hostname of this server
+MYSHORTNAME=$(echo $MYHOSTNAME | cut -f 1 -d'.')
+TMPFILE="/tmp/$(basename $0).$$"	# Tempory File
+TOPDIR="/opt/LINUXexplo"		# Top level output directory
+CHECKTYPE=""				# Nothing selected
+
+CurDate=`		/bin/date +%y%m%d_%H%M%S`
+HostName=`uname -n`
+LOGNAME="$HostName-$CurDate"
+LOGDIR="/tmp/$LOGNAME"
+echo "Script starting"
+echo "Log data will be stored in $LOGDIR"
+echo "Output results will be tar-zipped to $LOGDIR.tgz"
+echo ""
+
+echo `date +%Y%m%d`
+###SCENARIO###  JAVA JSTAT
+x:\pytontest\sh-files\check_app_mem.sh 
+
+###SCENARIO###  HOW MUCH SPACE
+# the /var/opt/opsco/logs/PRD directory is taking up
+x:\pytontest\sh-files\check_bad_csv_files (2)-0546.sh
+
+###SCENARIO###   CPUSTAT 
+x:\pytontest\sh-files\cpustat.sh
+
+###SCENARIO###  Remove any previous day's work, so we don't collect stale logs
+rm -rf $ROOTDIR/20[0-9][0-9][0-9][0-9][0-9][0-9]
+
+###SCENARIO###  Captures cpu by light weight thread and thread dumps a specified number
+x:\pytontest\sh-files\high_cpu_linux.sh
+x:\pytontest\sh-files\high_cpu_linux_jstack.sh
+
+###SCENARIO###   kernel stack trace profiling for Linux
+x:\pytontest\sh-files\kstacksampler (2).sh
+
+###SCENARIO###  collect deep detailed information about a linux system
+x:\pytontest\sh-files\linux-explorer-0783-1807.sh
+
+###SCENARIO###  Health Check Report (CPU,Process,Disk Usage, Memory)
+x:\pytontest\sh-files\linux-health-check-report-1808.sh
+
+###SCENARIO###  # This script can be used to collect and view performance data collected with perf_event on Linux.
+x:\pytontest\sh-files\Performance Data Collection Script Lttng perfcollect-2563.sh
+
+###SCENARIO###  monitor I/O utilization using the UNIX utility "iostat".
+x:\pytontest\sh-files\iostat-0739-1730.sh
+
+###SCENARIO###  ethtool_info
+function ethtool_info
+{
+
+	if [ -x "$ETHTOOL" ] ; then
+
+		Echo "Section - ethtool checks"
+
+		for version in 4 6
+		do
+			INTERFACES=$( cat /proc/net/dev | grep "[0-9]:" | awk -F: '{print $1 }' )
+
+			for i in $INTERFACES
+			do
+				$ETHTOOL $i    >  ${LOGDIR}/network/ethtool_ipv${version}_${i}.out    2>&1
+       		 		$ETHTOOL -i $i >> ${LOGDIR}/network/ethtool_ipv${version}_-i_${i}.out 2>&1
+       		 		$ETHTOOL -S $i >> ${LOGDIR}/network/ethtool_ipv${version}_-S_${i}.out 2>&1
+			done
+		done
+	fi
+}
+###SCENARIO###  This script attempts to gather troubleshooting information on 
+x:\pytontest\sh-files\qla_linux-info-2759.sh
+
+###SCENARIO###  Gather /proc data
+
+mkdir $LOGDIR/proc
+mkdir -p $LOGDIR/proc/bus/pci
+mkdir $LOGDIR/proc/driver
+mkdir $LOGDIR/proc/irq
+mkdir $LOGDIR/proc/scsi
+mkdir -p $LOGDIR/proc/sys/dev/scsi
+
+echo -n "Gathering /proc files "
+PROC_FILES="/proc/modules \
+/proc/cmdline \
+/proc/cpuinfo \
+/proc/devices \
+/proc/diskstats \
+/proc/interrupts \
+/proc/iomem \
+/proc/ioports \
+/proc/kallsyms \
+/proc/locks \
+/proc/meminfo \
+/proc/modules \
+/proc/mounts \
+/proc/mtrr \
+/proc/pagetypeinfo \
+/proc/partitions \
+/proc/schedstat \
+/proc/slabinfo \
+/proc/stat \
+/proc/swaps \
+/proc/timer_list \
+/proc/uptime \
+/proc/version \
+/proc/vmallocinfo \
+/proc/vmstat \
+/proc/zoneinfo \
+/proc/bus/pci/devices \
+/proc/driver/rtc \
+/proc/irq/default_smp_affinity \
+/proc/scsi/scsi \
+/proc/scsi/device_info \
+/proc/sys/dev/scsi/logging_level \
+/proc/pci \
+/proc/buddyinfo \
+/proc/ksyms \
+/proc/partitions \
+/proc/mtrr \
+/proc/filesystems \
+/proc/ioports \
+/proc/iba" 
+
+for file in $PROC_FILES
+do
+   if [ -f $file ]
+   then
+      cp -p $file $LOGDIR/$file
+   fi
+done
+
+
+   # Other proc/net files
+   PROC_FILES="/proc/net/arp \
+   /proc/net/dev \
+   /proc/net/dev_mcast \
+   /proc/net/route \
+   /proc/net/rt_cache"
+   for file in $PROC_FILES
+   do
+      if [ -f $file ]
+      then
+         cp -p $file $LOGDIR/$file
+      fi
+   done
+fi
+
+echo "... done"
+
+
+
+###SCENARIO###  Gather network info
+#####################################################################
+echo -n "Gathering network info "
+mkdir $LOGDIR/network
+mkdir $LOGDIR/network/interfaces
+iptables --list > $LOGDIR/network/iptables.out 2>&1
+ifconfig -a     > $LOGDIR/network/ifconfig.out 2>&1
+ip addr show    > $LOGDIR/network/ipaddrshow.out 2>&1
+ip -s link show > $LOGDIR/network/iplinkshow.out 2>&1
+ss -a           > $LOGDIR/network/ss-s.out 2>&1
+netstat -rn     > $LOGDIR/network/netstat.out
+ip route        > $LOGDIR/network/ip-route.out 2>&1
+
+which ethtool > /dev/null 2>&1
+if [ $? -eq 0 ]
+then
+   ALLfaces=`ifconfig -a | grep HW | cut -d" " -f1`
+   for file in $ALLfaces
+   do
+      if [ $? -eq 0 ]
+      then
+         ethtool -S $file > $LOGDIR/network/interfaces/ethtool-S.$file 2>&1
+         ethtool    $file > $LOGDIR/network/interfaces/ethtool.$file 2>&1
+         ethtool -k $file > $LOGDIR/network/interfaces/ethtool-k.$file 2>&1
+         ethtool -i $file > $LOGDIR/network/interfaces/ethtool-i.$file 2>&1
+         ethtool -a $file > $LOGDIR/network/interfaces/ethtool-a.$file 2>&1
+         ifconfig   $file > $LOGDIR/network/interfaces/ifconfig.$file 2>&1
+      fi
+   done
+fi
+
+echo "... done"
+
+###SCENARIO###  ethtool
+   for nic in `for i in \`ls /sys/bus/pci/drivers/qede/\`; do ls /sys/bus/pci/devices/$i/net 2> /dev/null; done`;
+   do
+     bdf=`ethtool -i $nic | grep bus | grep "[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]\.[0-9a-f]" -o`
+
+     mac=`ip -o link show $nic | grep -o ..:..:..:..:..:.. | head -n 1`
+     if [ -z $mac ]
+     then
+        mac="-"
+     fi
+#### add timestamp to gz files
+logrotate_lastaction_pimp.sh
+LOGDATE=$(date +"%H:%M")
+GZREGEX="s/(.*).gz$/\$1-$LOGDATE.gz/"
+rename $GZREGEX *.gz
+
+
+###SCENARIO### Linux utility for finding the largest files/directories [closed]
+https://superuser.com/questions/9847/linux-utility-for-finding-the-largest-files-directories/160964
+$ find . -type f -print0 | xargs -0 du | sort -n | tail -10 | cut -f2 | xargs -I{} du -sh {}
+
+  76M    ./snapshots/projects/weekly.1/onthisday/onthisday.tar.gz
+  76M    ./snapshots/projects/weekly.2/onthisday/onthisday.tar.gz
+  76M    ./snapshots/projects/weekly.3/onthisday/onthisday.tar.gz
+  76M    ./tmp/projects/onthisday/onthisday.tar.gz
+  114M   ./Dropbox/snapshots/weekly.tgz
+  114M   ./Dropbox/snapshots/daily.tgz
+  114M   ./Dropbox/snapshots/monthly.tgz
+  117M   ./Calibre Library/Robert Martin/cc.mobi
+  159M   ./.local/share/Trash/files/funky chicken.mpg
+  346M   ./Downloads/The Walking Dead S02E02 ... (dutch subs nl).avi
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 

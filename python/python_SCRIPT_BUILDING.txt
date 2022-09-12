@@ -1,0 +1,269 @@
+###SCENARIO### Listing all the files inside a directory
+import os
+files = os.listdir("/path_to_directory")
+
+Finding the largest file
+# I am sorting the file using their size
+# os.stat(file_path).st_size returns the size of file
+sorted_file_list = sorted(files, key=lambda x: os.stat(x).st_size , reverse=True)
+
+
+###SCENARIO### Analyzing Data from Multiple Files
+https://swcarpentry.github.io/python-novice-inflammation/04-files/
+###SCENARIO### find large folders and files
+http://learning-python.com/cgi/showcode.py?name=treesize/treesize.py
+
+###SCENARIO### x:\pytontest\py-files\largest (2).py
+************************************************************************
+# largest.py
+#
+# Find the largest file
+
+from linesdir import *
+from apachelog import *
+
+lines = lines_from_dir("access-log*","www")
+log = apache_log(lines)
+
+print "%d %s" % max((r['bytes'],r['request'])
+                    for r in log)
+                    
+###SCENARIO### x:\pytontest\py-files-3\bigext-tree.py
+************************************************************************
+"""
+Find the largest file of a given type in an arbitrary directory tree.
+Avoid repeat paths, catch errors, add tracing and line count size.
+Also uses sets, file iterators and generator to avoid loading entire 
+file, and attempts to work around undecodable dir/file name prints.
+"""
+
+import os, pprint
+from sys import argv, exc_info
+
+trace = 1                                    # 0=off, 1=dirs, 2=+files
+dirname, extname = os.curdir, '.py'          # default is .py files in cwd
+if len(argv) > 1: dirname = argv[1]          # ex: C:\, C:\Python31\Lib
+if len(argv) > 2: extname = argv[2]          # ex: .pyw, .txt
+if len(argv) > 3: trace   = int(argv[3])     # ex: ". .py 2"
+
+def tryprint(arg):
+    try:
+        print(arg)                           # unprintable filename?
+    except UnicodeEncodeError:
+        print(arg.encode())                  # try raw byte string
+ 
+visited  = set()
+allsizes = []
+for (thisDir, subsHere, filesHere) in os.walk(dirname):
+    if trace: tryprint(thisDir)
+    thisDir = os.path.normpath(thisDir)
+    fixname = os.path.normcase(thisDir)
+    if fixname in visited:
+        if trace: tryprint('skipping ' + thisDir)
+    else:
+        visited.add(fixname)
+        for filename in filesHere:
+            if filename.endswith(extname):
+                if trace > 1: tryprint('+++' + filename)
+                fullname = os.path.join(thisDir, filename)
+                try:
+                    bytesize = os.path.getsize(fullname)
+                    linesize = sum(+1 for line in open(fullname, 'rb'))
+                except Exception:
+                    print('error', exc_info()[0])
+                else:
+                    allsizes.append((bytesize, linesize, fullname))
+
+for (title, key) in [('bytes', 0), ('lines', 1)]:
+    print('\nBy %s...' % title)
+    allsizes.sort(key=lambda x: x[key])
+    pprint.pprint(allsizes[:3])
+    pprint.pprint(allsizes[-3:])
+
+
+
+x:\pytontest\py-files-3\biggerdir (2).py
+************************************************************************
+import sys, os
+if sys.platform[:3] == 'win':
+    libdir = r'C:\Python24\Lib'
+else:
+    libdir = '/usr/lib/python'
+
+allsizes = []
+for (thisDir, subsHere, filesHere) in os.walk(libdir):
+   for filename in filesHere:
+       if filename.endswith('.py'):
+           filepath = os.path.join(thisDir, filename)
+           filesize = os.path.getsize(filepath)
+           allsizes.append((filesize, filepath))
+
+allsizes.sort()    
+print 'Small', allsizes[:3]
+print 'Large', allsizes[-3:]
+
+
+
+###SCENARIO### How do I find out which file type is taking up the most space?
+https://superuser.com/questions/157884/how-do-i-find-out-which-file-type-is-taking-up-the-most-space
+
+###SCENARIO### Get Largest Files Linux
+https://codegists.com/code/get-largest-files-linux/
+
+###SCENARIO### Recursive File and Directory Manipulation in Python (Part 2)
+
+https://www.pythoncentral.io/recursive-file-and-directory-manipulation-in-python-part-2/
+https://www.pythoncentral.io/recursive-file-and-directory-manipulation-in-python-part-3/
+###SCENARIO### INTERESTING FILES gather_debug
+x:\pytontest\py-files\gather_debug (2).py
+X:\clypcal\Sun Trading\helios-Linux-gcc-1.00\scripts\hsutils.py
+X:\clypcal\Sun Trading\helios-Linux-gcc-1.00\scripts\db_conn.py
+X:\clypcal\Sun Trading\helios-Linux-gcc-1.00\scripts\bt.sh
+x:\pytontest\py-files\generate_stats.py
+x:\pytontest\py-files\getDiskVolumeInfo.py
+x:\pytontest\py-files\GlobFile_using Join.py
+X:\pytontest\py-files\ifstat.py
+X:\pytontest\py-files\perfpd.py
+x:\pytontest\py-files\InfinityPortfolioMapping (2).py
+
+
+
+
+
+
+
+
+
+
+
+###SCENARIO### Create an output directory
+################################################################################
+# Subroutines
+################################################################################
+def create_pid_outdir(pid):
+
+    """ Create an output directory for results for this pid """
+
+    home = os.environ.get('HOME')
+
+    path = home + "/logs/weekly/gather_debug." + pid
+
+    os.makedirs(path)
+
+    return path
+
+###SCENARIO### find_cores
+def find_cores():
+
+    home = os.environ.get('HOME')
+
+    pathname = home + '/helios/core.*'
+
+    print "pathname = " + pathname
+
+    core_files = glob.glob(pathname)
+
+    if not core_files:
+        print "No cores exist"
+        return None
+
+    return core_files
+
+###SCENARIO### move_core_file
+def move_core_file(core_file, pid_outdir):
+
+    core_filename = os.path.basename(core_file)
+
+    save_name = pid_outdir + '/' + core_filename.upper()
+
+    print "Moving " + core_file + " to " + save_name
+
+    os.rename(unicode(core_file), unicode(save_name))
+
+    # Change the owner and group id of path to the numeric uid and gid. To leave one of the ids unchanged, set it to -1.
+
+    os.chmod( save_name, 0644 )
+
+    return save_name
+###SCENARIO### run_cmd
+def run_cmd(cmd, timeout=None):
+
+    """run_cmd - Run a command and return a dict with return code and output"""
+
+    child = subprocess.Popen(cmd,
+                             shell = True,
+                             stdout = subprocess.PIPE,
+                             stderr = subprocess.PIPE)
+
+    start_time = int(time.time())
+
+    if timeout:
+        kill_time = start_time + int(timeout)
+
+    while True:
+        rc = child.poll()
+        if rc != None:
+            # get run time
+            run_time=int(time.time() - start_time)
+
+            # get STDOUT and STDERR from the child pipe
+            (stdout, stderr) = child.communicate()
+
+            return( {'rc': rc,
+                     'stdout': stdout,
+                     'stderr': stderr,
+                     'run_time': run_time,
+                     'timed_out': False} )
+
+        elif(timeout and time.time() > kill_time):
+            # time to kill the process
+            os.kill(child.pid, signal.SIGTERM)
+
+            # get run time
+            run_time=int(time.time() - start_time)
+
+            # get STDOUT and STDERR from the child pipe
+            (stdout, stderr) = child.communicate()
+
+            return( {'rc': None,
+                     'stdout': stdout,
+                     'stderr': stderr,
+                     'run_time': run_time,
+                     'timed_out': True} )
+
+        else:
+            # Not done running, but not exceeded our maximum run time.
+            # Sleep for a second and process the situation again.
+            time.sleep(1)
+
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 
+###SCENARIO### 

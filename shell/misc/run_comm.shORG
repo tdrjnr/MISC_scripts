@@ -1,0 +1,53 @@
+#!/bin/bash
+set -x
+
+'http://mywiki.wooledge.org/ProcessManagement?#How_to_work_with_processes
+http://mywiki.wooledge.org/BashFAQ
+
+Loop through all arguments and check if they are ﬁles:
+https://www.phusionpassenger.com/library/deploy/nginx/automating_app_updates/python/
+
+automation scripts in python
+bash run multiple commands on multiple servers
+'
+
+'
+for (( i = 1; i <= $#; ++ i )) do
+item=${@:$i:1}
+if [[ -f $item ]]; then echo "$item is a file"
+fi done
+
+for i in `cat foo.txt`
+do
+    sudo $i
+done
+
+
+command="${@: -1}"
+servers_count=$(($# - 1))
+
+command=`cat foo.txt`
+#servers=`cat servers.txt`
+servers="${`cat servers.txt`:$servers_count}"
+
+user=${user:-root}
+
+for server in $servers
+do
+	hostname="$server$domain"
+	echo "---> Running command on $hostname as $user:"
+	ssh $user@$hostname "$command"
+	echo
+done
+'
+servers=`cat /root/servers.txt`
+servers_count=$(($# - 1))
+#for server in $servers
+#do
+#hostname="$server$domain"
+#echo "---> Running command on $hostname as $user:"
+#ssh $user@$hostname "$command"
+#ping -c2 $server
+echo $servers
+done
+

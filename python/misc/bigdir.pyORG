@@ -1,0 +1,23 @@
+import sys, os
+from pprint import pprint
+import operator
+import argparse
+
+
+allsizes = []
+for (thisDir, subsHere, filesHere) in os.walk("/var/log"):
+	for filename in filesHere:
+		filepath = os.path.join(thisDir, filename)
+		filesize = os.path.getsize(filepath)
+		allsizes.append((filesize, filepath))
+
+#pprint (allsizes)
+#allsizes.sort()
+allsizes.sort(key=operator.itemgetter(0))
+allsizesdict=dict((y, x) for x, y in allsizes)
+#print('Small', (allsizes[:3]))
+print('Large', allsizes[-3:])
+#pprint('Large', allsizes[-3:])
+#print (larg[1])
+#for i in larg:
+	#print(type(i[0][0]))

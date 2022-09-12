@@ -1,0 +1,33 @@
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:6000            0.0.0.0:*               LISTEN      1900/X              
+tcp        0      0 192.168.122.1:53        0.0.0.0:*               LISTEN      1662/dnsmasq        
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1330/sshd           
+tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN      1325/cupsd          
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      1711/master         
+tcp        0      0 192.168.0.107:38316     216.58.206.78:443       ESTABLISHED 3193/firefox        
+tcp6       0      0 :::6000                 :::*                    LISTEN      1900/X              
+tcp6       0      0 :::22                   :::*                    LISTEN      1330/sshd           
+tcp6       0      0 ::1:631                 :::*                    LISTEN      1325/cupsd          
+tcp6       0      0 ::1:25                  :::*                    LISTEN      1711/master         
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           677/chronyd         
+udp        0      0 0.0.0.0:38097           0.0.0.0:*                           651/avahi-daemon: r 
+udp        0      0 0.0.0.0:5353            0.0.0.0:*                           651/avahi-daemon: r 
+udp        0      0 192.168.122.1:53        0.0.0.0:*                           1662/dnsmasq        
+udp        0      0 0.0.0.0:67              0.0.0.0:*                           1662/dnsmasq        
+udp        0      0 0.0.0.0:68              0.0.0.0:*                           1093/dhclient       
+udp6       0      0 ::1:323                 :::*                                677/chronyd         
+raw6       0      0 :::58                   :::*                    7           813/NetworkManager  
+Active UNIX domain sockets (servers and established)
+Proto RefCnt Flags       Type       State         I-Node   PID/Program name     Path
+unix  2      [ ACC ]     STREAM     LISTENING     30056    2170/ibus-daemon     @/tmp/dbus-rAkb0Vm0
+unix  2      [ ACC ]     STREAM     LISTENING     27502    1900/X               /tmp/.X11-unix/X0
+unix  2      [ ACC ]     STREAM     LISTENING     15884    1/systemd            /var/run/libvirt/virtlockd-sock
+unix  2      [ ACC ]     STREAM     LISTENING     29601    1907/gnome-session-  /tmp/.ICE-unix/1907
+unix  2      [ ACC ]     STREAM     LISTENING     15888    1/systemd            /var/run/rpcbind.sock
+unix  2      [ ACC ]     STREAM     LISTENING     15890    1/systemd            /var/run/libvirt/virtlogd-sock
+unix  2      [ ACC ]     STREAM     LISTENING     29600    1907/gnome-session-  @/tmp/.ICE-unix/1907
+unix  2      [ ACC ]     STREAM     LISTENING     15892    1/systemd            /var/run/cups/cups.sock
+unix  2      [ ACC ]     STREAM     LISTENING     31910    2315/pulseaudio      /tmp/.esd-0/socket
+unix  2      [ ACC ]     STREAM     LISTENING     15894    1/systemd            /var/run/avahi-daemon/socket
+unix  2      [ ACC ]     STREAM     LISTENING     54273    3999/010editor       

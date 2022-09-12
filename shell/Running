@@ -1,0 +1,14 @@
+
+servers_count=localhost
+127.0.0.1
+echo 
+for server in 
+do
+	Uptime : up 1 hour, 19 minutes
+	#hostname=
+	#echo --- command on as :
+	#ssh @ 
+	ping -c2 
+	echo 
+done
+
